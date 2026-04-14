@@ -71,7 +71,7 @@ ASGI_APPLICATION = 'config.asgi.application'
 # Database
 DATABASES = {
     'default': dj_database_url.config(
-        default=config('DATABASE_URL', default='sqlite:///db.sqlite3'),
+        default=config('DATABASE_URL', default='postgres://postgres:password@localhost:5432/intzam_lms'),
         conn_max_age=600,
     )
 }
