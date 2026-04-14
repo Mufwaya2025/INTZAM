@@ -74,7 +74,7 @@ export const qualifiedBaseAPI = {
     }),
     create: (data: any) => api.post('/qualified-base/', data),
     eligibleClients: () => api.get('/qualified-base/eligible-clients/'),
-    addFromClient: (data: { client_id: number; amount_qualified_for: number; reason: string }) =>
+    addFromClient: (data: { client_id: number; amount_qualified_for: number; reason: string; product_name?: string | null }) =>
         api.post('/qualified-base/from-client/', data),
 };
 
