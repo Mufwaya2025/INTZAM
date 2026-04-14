@@ -1,0 +1,57 @@
+# =============================================================================
+#  IntZam LMS — .gitignore
+# =============================================================================
+
+# ── Environment files (NEVER commit secrets) ──────────────────────────────────
+.env
+.env.local
+.env.staging
+.env.production
+.env.*
+# Exception: keep the example/template files so new developers have a reference
+!.env.example
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.pyo
+
+# ── Virtual environments ──────────────────────────────────────────────────────
+venv/
+.venv/
+env/
+.env/         # directory named .env (different from the .env file above)
+
+# ── Django ────────────────────────────────────────────────────────────────────
+db.sqlite3
+db.sqlite3-journal
+staticfiles/
+media/
+*.log
+
+# ── Testing ───────────────────────────────────────────────────────────────────
+.coverage
+htmlcov/
+.pytest_cache/
+coverage.xml
+
+# ── IDEs ──────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Misc ──────────────────────────────────────────────────────────────────────
+*.bak
+*.tmp
+temp_page.html
+test_odoo_connection.py

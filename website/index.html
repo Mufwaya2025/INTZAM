@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/static/site/favicon.svg" />
+  <meta name="description"
+    content="IntZam Micro Fin Limited offers fast, transparent loans with a modern digital experience for clients and a robust operations platform for staff." />
+  <meta name="theme-color" content="#3b1d74" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://intzam.com/" />
+  <meta property="og:title" content="IntZam | Smart Lending for Growing Communities" />
+  <meta property="og:description" content="IntZam Micro Fin Limited offers fast, transparent loans with a modern digital experience for clients in Zambia." />
+  <meta property="og:image" content="https://intzam.com/static/site/images/logo.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="IntZam | Smart Lending for Growing Communities" />
+  <meta name="twitter:description" content="IntZam Micro Fin Limited offers fast, transparent loans with a modern digital experience for clients in Zambia." />
+  <title>IntZam | Smart Lending for Growing Communities</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+
+<body data-page="home">
+  <div class="site-shell">
+    <header class="topbar">
+      <div class="container topbar-inner">
+        <a class="brand" href="#home" aria-label="IntZam home">
+          <img class="brand-logo" src="/static/site/images/logo.jpg" alt="IntZam Micro Fin Limited" />
+        </a>
+
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <nav class="nav" id="site-nav">
+          <a href="#products">Products</a>
+          <a href="/civil-servants/">Civil Servants</a>
+          <a href="/eligibility/">Eligibility</a>
+          <a href="/calculator/">Calculator</a>
+          <a href="/about/">About</a>
+          <a href="/contact/">Contact</a>
+        </nav>
+
+        <div class="topbar-actions">
+          <a class="btn btn-primary" href="/client-pwa/" data-client-link>Apply Now</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" id="home">
+        <div class="container hero-grid">
+          <div class="hero-copy reveal">
+            <div class="eyebrow" id="hero-eyebrow">Fast. Clear. Human-centered lending.</div>
+            <h1 id="hero-title">Beautiful digital lending for everyday ambition.</h1>
+            <p class="hero-text" id="hero-description">
+              IntZam helps individuals and growing businesses access flexible loans with transparent pricing,
+              simple onboarding, and a modern mobile-first experience.
+            </p>
+
+            <div class="hero-actions">
+              <a class="btn btn-primary btn-lg" href="/client-pwa/" data-client-link id="primary-cta">Start an application</a>
+              <a class="btn btn-secondary btn-lg" href="#products" id="secondary-cta">Explore products</a>
+            </div>
+
+            <div class="hero-proof">
+              <div class="proof-card">
+                <strong>24h</strong>
+                <span>Fast review turnaround</span>
+              </div>
+              <div class="proof-card">
+                <strong>100%</strong>
+                <span>Transparent loan pricing</span>
+              </div>
+              <div class="proof-card">
+                <strong>Mobile</strong>
+                <span>Manage your loan anywhere</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="hero-visual reveal">
+            <div class="hero-card hero-card-main">
+              <div class="phone-top">
+                <span class="phone-dot"></span>
+                <span class="phone-dot"></span>
+                <span class="phone-dot"></span>
+              </div>
+
+              <div class="phone-panel phone-panel-gradient">
+                <span class="chip">Client Portal</span>
+                <h2>Apply in minutes</h2>
+                <p>Track applications, repayments, and loan history from one clean dashboard.</p>
+              </div>
+
+              <div class="phone-stats">
+                <div class="mini-stat glass-card">
+                  <span>Loan Status</span>
+                  <strong>Under Review</strong>
+                </div>
+                <div class="mini-stat glass-card">
+                  <span>Repayment Due</span>
+                  <strong>ZMW 2,450</strong>
+                </div>
+              </div>
+
+              <div class="phone-list">
+                <div class="phone-row">
+                  <span class="phone-row-icon success"></span>
+                  <div>
+                    <strong>Quick Eligibility Check</strong>
+                    <span>Know what you qualify for early</span>
+                  </div>
+                </div>
+                <div class="phone-row">
+                  <span class="phone-row-icon"></span>
+                  <div>
+                    <strong>KYC Workflow</strong>
+                    <span>Seamless onboarding and document capture</span>
+                  </div>
+                </div>
+                <div class="phone-row">
+                  <span class="phone-row-icon warning"></span>
+                  <div>
+                    <strong>Smart Notifications</strong>
+                    <span>Never miss upcoming repayments</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="hero-floating hero-floating-one glass-card">
+              <span class="floating-label">Trusted process</span>
+              <strong>KYC, underwriting, collections, and reporting in one ecosystem</strong>
+            </div>
+
+            <div class="hero-floating hero-floating-two glass-card">
+              <span class="floating-label">Built for Zambia</span>
+              <strong id="zambia-focus-copy">Designed around local lending operations and growth realities</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="stats-band reveal">
+        <div class="container stats-grid">
+          <article class="stat-block">
+            <strong>Client-first</strong>
+            <span>Elegant self-service journey from registration to repayment.</span>
+          </article>
+          <article class="stat-block">
+            <strong>Operations-ready</strong>
+            <span>Full support for underwriting, collections, accounting, and reporting.</span>
+          </article>
+          <article class="stat-block">
+            <strong>Digitally native</strong>
+            <span>Mobile-friendly flows with clean data capture and faster decisions.</span>
+          </article>
+        </div>
+      </section>
+
+      <div id="dynamic-page-sections"></div>
+
+      <section class="section" id="products">
+        <div class="container">
+          <div class="section-heading reveal">
+            <div class="eyebrow">Products</div>
+            <h2>Flexible financing that feels simple.</h2>
+            <p>From personal loans to business support, IntZam offers transparent products designed around the real needs of Zambia's working households and professionals.</p>
+          </div>
+
+          <div class="product-grid" id="product-grid">
+            <article class="feature-card reveal">
+              <div class="feature-icon">01</div>
+              <h3>Personal Loans</h3>
+              <p>Fast access to funds for urgent needs, family goals, and personal growth opportunities.</p>
+              <ul>
+                <li>Transparent fees and repayment terms</li>
+                <li>Friendly onboarding flow</li>
+                <li>Simple eligibility journey</li>
+              </ul>
+            </article>
+
+            <article class="feature-card reveal">
+              <div class="feature-icon">02</div>
+              <h3>Business Support</h3>
+              <p>Working capital and short-term lending designed for traders, founders, and small business operators.</p>
+              <ul>
+                <li>Digital application tracking</li>
+                <li>Income-aware review process</li>
+                <li>Structured repayment visibility</li>
+              </ul>
+            </article>
+
+            <article class="feature-card reveal">
+              <div class="feature-icon">03</div>
+              <h3>Loyalty-Based Growth</h3>
+              <p>Support repeat, reliable clients with a tiered experience that rewards healthy repayment behavior.</p>
+              <ul>
+                <li>Client progression and tiering</li>
+                <li>Better long-term relationships</li>
+                <li>Stronger retention and trust</li>
+              </ul>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-alt" id="audiences">
+        <div class="container">
+          <div class="section-heading reveal">
+            <div class="eyebrow">Who we serve</div>
+            <h2>Built for Zambia's salaried professionals and hard-working households.</h2>
+            <p id="audience-intro">Especially relevant for civil servants, teachers, nurses, and other dependable earners who need a simpler, more respectful lending experience.</p>
+          </div>
+
+          <div class="audience-grid" id="audience-grid">
+            <article class="audience-card reveal">
+              <div class="audience-badge">Priority audience</div>
+              <h3>Civil Servants</h3>
+              <p>Clear application flows and dependable support for public sector employees who value speed, trust, and predictable repayments.</p>
+            </article>
+
+            <article class="audience-card reveal">
+              <div class="audience-badge">Everyday growth</div>
+              <h3>Teachers and Nurses</h3>
+              <p>Flexible personal financing designed for professionals balancing family needs, school fees, transport, and household plans.</p>
+            </article>
+
+            <article class="audience-card reveal">
+              <div class="audience-badge">Business momentum</div>
+              <h3>Traders and Small Businesses</h3>
+              <p>Working capital support for business owners who need fast access to structured, transparent financing.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-alt" id="how-it-works">
+        <div class="container">
+          <div class="section-heading reveal">
+            <div class="eyebrow">How it works</div>
+            <h2>A simple journey from application to repayment.</h2>
+          </div>
+
+          <div class="steps-grid">
+            <article class="step-card reveal">
+              <span class="step-index">Step 1</span>
+              <h3>Create your profile</h3>
+              <p>Register quickly, complete your details, and prepare the core information needed for review.</p>
+            </article>
+
+            <article class="step-card reveal">
+              <span class="step-index">Step 2</span>
+              <h3>Submit your application</h3>
+              <p>Choose a product, select the amount and term, and send your application with confidence.</p>
+            </article>
+
+            <article class="step-card reveal">
+              <span class="step-index">Step 3</span>
+              <h3>Track progress in real time</h3>
+              <p>See where your application stands, what is needed next, and when your loan is approved.</p>
+            </article>
+
+            <article class="step-card reveal">
+              <span class="step-index">Step 4</span>
+              <h3>Manage your loan beautifully</h3>
+              <p>View balances, repayment history, and important reminders from a modern dashboard.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="why-intzam">
+        <div class="container showcase-grid">
+          <div class="showcase-copy reveal">
+            <div class="eyebrow">Why IntZam</div>
+            <h2>Built for trust, clarity, and operational excellence.</h2>
+            <p>
+              IntZam combines a polished customer experience with the behind-the-scenes tools lenders need to run a
+              healthy, scalable portfolio.
+            </p>
+
+            <div class="benefit-list">
+              <div class="benefit-item">
+                <span class="benefit-dot"></span>
+                <div>
+                  <strong>Clean digital onboarding</strong>
+                  <p>KYC-ready intake that reduces friction and makes first impressions count.</p>
+                </div>
+              </div>
+
+              <div class="benefit-item">
+                <span class="benefit-dot"></span>
+                <div>
+                  <strong>Faster decisions</strong>
+                  <p>Structured data, underwriting support, and clearer visibility across the loan lifecycle.</p>
+                </div>
+              </div>
+
+              <div class="benefit-item">
+                <span class="benefit-dot"></span>
+                <div>
+                  <strong>Professional servicing</strong>
+                  <p>Repayments, collections, accounting, and reporting align around one cohesive workflow.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="showcase-panel reveal">
+            <div class="showcase-card">
+              <div class="showcase-header">
+                <span class="pill">Operations Platform</span>
+                <strong>What powers the experience</strong>
+              </div>
+
+              <div class="showcase-metrics">
+                <div class="showcase-metric">
+                  <span>Underwriting</span>
+                  <strong>Clear review workflow</strong>
+                </div>
+                <div class="showcase-metric">
+                  <span>Collections</span>
+                  <strong>Queue visibility and follow-up tracking</strong>
+                </div>
+                <div class="showcase-metric">
+                  <span>Accounting</span>
+                  <strong>Structured financial operations</strong>
+                </div>
+                <div class="showcase-metric">
+                  <span>Reports</span>
+                  <strong>Management and compliance support</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-alt testimonials">
+        <div class="container">
+          <div class="section-heading reveal">
+            <div class="eyebrow">Confidence</div>
+            <h2>What our clients say.</h2>
+            <p>Real people, real results. Hear from borrowers who have experienced IntZam's transparent and supportive lending process.</p>
+          </div>
+
+          <div class="testimonial-grid" id="testimonial-grid">
+            <article class="quote-card reveal">
+              <p>"The experience should feel modern, professional, and reassuring from the first click."</p>
+              <strong>Designed for borrowers</strong>
+            </article>
+
+            <article class="quote-card reveal">
+              <p>"Your public website now has room to explain products, process, and trust in a premium way."</p>
+              <strong>Designed for growth</strong>
+            </article>
+
+            <article class="quote-card reveal">
+              <p>"The visual language can now evolve separately from the internal admin and client product flows."</p>
+              <strong>Designed for scale</strong>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section faq-section" id="faq">
+        <div class="container faq-grid">
+          <div class="section-heading reveal faq-heading">
+            <div class="eyebrow">FAQ</div>
+            <h2>Common questions, clearly answered.</h2>
+            <p>Everything you need to know before you apply — from eligibility and documents to repayments and timelines.</p>
+          </div>
+
+          <div class="faq-list" id="faq-list">
+            <details class="faq-item reveal" open>
+              <summary>Who can apply for an IntZam loan?</summary>
+              <p>Individuals and qualifying businesses can apply, subject to eligibility, KYC requirements, and internal review.</p>
+            </details>
+
+            <details class="faq-item reveal">
+              <summary>How long does the review process take?</summary>
+              <p>Review times depend on the completeness of the application and required checks, but the experience is designed for speed and clarity.</p>
+            </details>
+
+            <details class="faq-item reveal">
+              <summary>Can I track my application status online?</summary>
+              <p>Yes. The connected client portal is designed to help applicants view status updates, loan details, and repayment information.</p>
+            </details>
+
+            <details class="faq-item reveal">
+              <summary>What information do I need to get started?</summary>
+              <p>You typically need identity details, contact information, and any supporting financial or KYC documentation required for your product type.</p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <section class="section calculator-preview-section">
+        <div class="container calculator-preview-grid">
+          <div class="section-heading reveal">
+            <div class="eyebrow">Calculator</div>
+            <h2>Estimate your repayment before you apply.</h2>
+            <p>Use the public calculator to explore loan products, compare amounts and terms, and understand monthly repayment expectations.</p>
+            <div class="hero-actions">
+              <a class="btn btn-primary btn-lg" href="/calculator/">Open loan calculator</a>
+              <a class="btn btn-secondary btn-lg" href="/eligibility/">View eligibility guide</a>
+            </div>
+          </div>
+
+          <div class="calculator-preview-card reveal">
+            <div class="calculator-preview-row">
+              <span>Designed for Zambia</span>
+              <strong>Civil servants, teachers, nurses, and salaried earners</strong>
+            </div>
+            <div class="calculator-preview-row">
+              <span>Works with LMS products</span>
+              <strong>Live product ranges and term limits</strong>
+            </div>
+            <div class="calculator-preview-row">
+              <span>Clear repayment view</span>
+              <strong>Monthly payment, fees, and total repayable</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section cta-section" id="contact">
+        <div class="container">
+          <div class="cta-card reveal">
+            <div>
+              <div class="eyebrow eyebrow-light">Ready to grow with IntZam?</div>
+              <h2 id="lead-form-title">Talk to IntZam about the right loan for you.</h2>
+              <p id="lead-form-description">Share a few details and our team can reach out, especially if you are a civil servant or salaried professional in Zambia.</p>
+
+              <div class="contact-points">
+                <a href="mailto:hello@intzam.com" id="contact-email" data-contact-email>hello@intzam.com</a>
+                <a href="tel:+260000000000" id="contact-phone" data-contact-phone>+260 000 000 000</a>
+              </div>
+            </div>
+
+            <form class="lead-form" id="lead-form">
+              <div class="form-grid">
+                <label>
+                  <span>Full name</span>
+                  <input class="form-control" type="text" name="full_name" placeholder="Your full name" required />
+                </label>
+                <label>
+                  <span>Phone number</span>
+                  <input class="form-control" type="tel" name="phone" placeholder="e.g. +26097..." required />
+                </label>
+                <label>
+                  <span>Email address</span>
+                  <input class="form-control" type="email" name="email" placeholder="Optional email" />
+                </label>
+                <label>
+                  <span>Audience</span>
+                  <select class="form-control" name="segment">
+                    <option value="CIVIL_SERVANT">Civil Servant</option>
+                    <option value="TEACHER_OR_NURSE">Teacher or Nurse</option>
+                    <option value="SALARIED_EMPLOYEE">Salaried Employee</option>
+                    <option value="BUSINESS_OWNER">Business Owner</option>
+                    <option value="OTHER">Other</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Employer</span>
+                  <input class="form-control" type="text" name="employer_name" placeholder="Ministry, school, hospital, company..." />
+                </label>
+                <label>
+                  <span>Desired amount (ZMW)</span>
+                  <input class="form-control" type="number" step="0.01" min="0" name="desired_amount" placeholder="0.00" />
+                </label>
+                <label class="form-full">
+                  <span>Anything we should know?</span>
+                  <textarea class="form-control" name="message" rows="4" placeholder="Tell us a little about your need."></textarea>
+                </label>
+                <label class="form-checkbox form-full">
+                  <input type="checkbox" name="consent" value="true" required />
+                  <span>I consent to IntZam contacting me about my enquiry.</span>
+                </label>
+              </div>
+
+              <div class="lead-form-actions">
+                <button class="btn btn-light btn-lg" type="submit">Request a callback</button>
+                <a class="btn btn-outline-light btn-lg" href="/client-pwa/" data-client-link>Go to client portal</a>
+              </div>
+
+              <div class="form-status" id="lead-form-status" aria-live="polite"></div>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer-grid">
+        <div>
+          <a class="brand footer-brand" href="#home">
+            <img class="brand-logo" src="/static/site/images/logo.jpg" alt="IntZam Micro Fin Limited" />
+          </a>
+        <div class="footer-social">
+          <a id="social-whatsapp" class="social-link" href="#" target="_blank" rel="noopener" aria-label="WhatsApp">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.12 1.526 5.855L.057 23.882l6.198-1.625A11.93 11.93 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.797 9.797 0 01-5.031-1.388l-.36-.214-3.733.979 1.003-3.626-.235-.374A9.786 9.786 0 012.182 12c0-5.424 4.394-9.818 9.818-9.818 5.424 0 9.818 4.394 9.818 9.818 0 5.424-4.394 9.818-9.818 9.818z"/></svg>
+          </a>
+          <a id="social-facebook" class="social-link" href="#" target="_blank" rel="noopener" aria-label="Facebook">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.532-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+          </a>
+          <a id="social-linkedin" class="social-link" href="#" target="_blank" rel="noopener" aria-label="LinkedIn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          </a>
+        </div>
+          <p class="footer-copy">Smart lending for growing communities, wrapped in a clean digital experience.</p>
+        </div>
+
+        <div class="footer-links">
+          <a href="#products">Products</a>
+          <a href="/civil-servants/">Civil Servants</a>
+          <a href="/eligibility/">Eligibility</a>
+          <a href="/calculator/">Calculator</a>
+          <a href="/about/">About</a>
+        </div>
+
+        <div class="footer-links">
+          <a href="/client-pwa/" data-client-link>Client Portal</a>
+          <a href="mailto:hello@intzam.com" id="footer-email" data-contact-email>hello@intzam.com</a>
+          <a href="tel:+260000000000" id="footer-phone" data-contact-phone>+260 000 000 000</a>
+        </div>
+      </div>
+    </footer>
+    <div class="footer-bottom">
+    <div class="container footer-bottom-inner">
+      <span class="footer-copy-legal">&copy; <span id="trust-year"></span> IntZam Micro Fin Limited. All rights reserved.</span>
+      <span id="trust-registration" class="footer-trust-item"></span>
+      <span id="trust-licence" class="footer-trust-item"></span>
+      <span id="trust-address" class="footer-trust-item"></span>
+      <div class="footer-legal-links">
+        <a href="/privacy/">Privacy Policy</a>
+        <a href="/terms/">Terms of Use</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <script src="/script.js"></script>
+</body>
+
+</html>

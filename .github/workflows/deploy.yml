@@ -1,0 +1,30 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build and Push Docker image
+        run: |
+          echo "Building docker image..."
+          # Deploy steps to AWS/DigitalOcean/etc.
+
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Deploy Admin to Vercel
+        run: |
+          echo "Deploying to Vercel..."
+
+      - name: Deploy PWA to Vercel
+        run: |
+          echo "Deploying to Vercel..."

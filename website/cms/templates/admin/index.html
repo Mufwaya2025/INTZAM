@@ -1,0 +1,46 @@
+{% extends "admin/index.html" %}
+
+{% block content %}
+<div style="margin-bottom: 24px; padding: 24px; border-radius: 20px; background: linear-gradient(135deg, #7c3aed, #24124b); color: white;">
+  <div style="font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.85; margin-bottom: 8px;">Content dashboard</div>
+  <h1 style="margin: 0 0 10px; font-size: 30px; line-height: 1.05;">Manage the standalone IntZam website from one place.</h1>
+  <p style="margin: 0; max-width: 760px; line-height: 1.7; opacity: 0.92;">Edit hero content, update public loan products, add page sections and blocks, refresh FAQs and testimonials, and review incoming leads without touching code.</p>
+  <div style="display:flex; flex-wrap:wrap; gap:12px; margin-top:18px;">
+    <a href="/" target="_blank" rel="noreferrer" style="display:inline-flex; align-items:center; min-height:44px; padding:0 16px; border-radius:999px; background:white; color:#24124b; text-decoration:none; font-weight:700;">Preview Website</a>
+    <a href="/contact/" target="_blank" rel="noreferrer" style="display:inline-flex; align-items:center; min-height:44px; padding:0 16px; border-radius:999px; background:rgba(255,255,255,0.12); color:white; text-decoration:none; font-weight:700; border:1px solid rgba(255,255,255,0.18);">Preview Contact Page</a>
+    <a href="/calculator/" target="_blank" rel="noreferrer" style="display:inline-flex; align-items:center; min-height:44px; padding:0 16px; border-radius:999px; background:rgba(255,255,255,0.12); color:white; text-decoration:none; font-weight:700; border:1px solid rgba(255,255,255,0.18);">Preview Calculator</a>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px;">
+  <a href="{% url 'admin:cms_websitesettings_changelist' %}" style="display: block; padding: 18px; border-radius: 16px; background: white; border: 1px solid #e5e7eb; text-decoration: none; color: #111827; box-shadow: 0 8px 24px rgba(15,23,42,0.06);">
+    <strong style="display:block; margin-bottom: 8px;">Website Settings</strong>
+    <span>Brand text, portal links, contact details, and homepage messaging.</span>
+  </a>
+  <a href="{% url 'admin:cms_webpage_changelist' %}" style="display: block; padding: 18px; border-radius: 16px; background: white; border: 1px solid #e5e7eb; text-decoration: none; color: #111827; box-shadow: 0 8px 24px rgba(15,23,42,0.06);">
+    <strong style="display:block; margin-bottom: 8px;">Website Pages</strong>
+    <span>Hero images, hero copy, CTAs, SEO, and navigation visibility.</span>
+  </a>
+  <a href="{% url 'admin:cms_publicloanproduct_changelist' %}" style="display: block; padding: 18px; border-radius: 16px; background: white; border: 1px solid #e5e7eb; text-decoration: none; color: #111827; box-shadow: 0 8px 24px rgba(15,23,42,0.06);">
+    <strong style="display:block; margin-bottom: 8px;">Loan Products</strong>
+    <span>Public calculator products, pricing ranges, and term limits.</span>
+  </a>
+  <a href="{% url 'admin:cms_websitelead_changelist' %}" style="display: block; padding: 18px; border-radius: 16px; background: white; border: 1px solid #e5e7eb; text-decoration: none; color: #111827; box-shadow: 0 8px 24px rgba(15,23,42,0.06);">
+    <strong style="display:block; margin-bottom: 8px;">Website Leads</strong>
+    <span>Review enquiries from contact forms and callback requests.</span>
+  </a>
+</div>
+
+<div style="margin-bottom: 28px; padding: 20px; border-radius: 16px; background: #f8fafc; border: 1px solid #e5e7eb;">
+  <strong style="display:block; margin-bottom: 8px;">Suggested editor workflow</strong>
+  <ol style="margin: 0; padding-left: 18px; line-height: 1.8;">
+    <li>Update global brand copy in <em>Website Settings</em>.</li>
+    <li>Edit page heroes and upload page hero images in <em>Website Pages</em>.</li>
+    <li>Add content sections and modular blocks for each page.</li>
+    <li>Adjust public loan products to keep the calculator accurate.</li>
+    <li>Review incoming leads and refresh FAQs/testimonials as needed.</li>
+  </ol>
+</div>
+
+{{ block.super }}
+{% endblock %}
