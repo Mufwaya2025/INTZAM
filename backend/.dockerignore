@@ -1,0 +1,15 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.env
+.env.local
+.env.production
+db.sqlite3
+media/
+staticfiles/
+*.log
+.git/
+.gitignore
