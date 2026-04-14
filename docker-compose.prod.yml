@@ -8,29 +8,41 @@ services:
     environment:
       - POSTGRES_DB=intzam_lms
       - POSTGRES_USER=intzam_user
-      - POSTGRES_PASSWORD=intzam_password
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U intzam_user -d intzam_lms"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   backend:
     build: ./backend
-    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000
-    volumes:
-      - ./backend:/app
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3"
     ports:
       - '8000:8000'
-    environment:
-      - DEBUG=False
-      - SECRET_KEY=generate_something_secure_here
-      - DATABASE_URL=postgres://intzam_user:intzam_password@db:5432/intzam_lms
-      - ALLOWED_HOSTS=api.yourdomain.com,localhost
-      - CORS_ALLOWED_ORIGINS=https://admin.yourdomain.com,https://client.yourdomain.com
+    env_file:
+      - ./backend/.env.production
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: always
-  
-  # For the frontends, we use static servers or serve them directly after build,
-  # or even proxy with an Nginx container. Below is an example for serving via Caddy/Nginx in a full stack, 
-  # or they can be deployed natively to Vercel/Netlify.
+
+  website:
+    build: ./website
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             gunicorn web_project.wsgi:application --bind 0.0.0.0:8001 --workers 2"
+    ports:
+      - '8001:8001'
+    env_file:
+      - ./website/.env.production
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
 
 volumes:
   postgres_data:
