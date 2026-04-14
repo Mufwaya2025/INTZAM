@@ -3,9 +3,9 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Accept build-time API URL
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
+ENV NODE_ENV=production
 
 COPY package*.json ./
 RUN npm ci --silent
@@ -13,9 +13,9 @@ RUN npm ci --silent
 COPY . .
 RUN npm run build
 
-# ── Stage 2: Export dist ───────────────────────────────────────────────────────
-# The dist/ output is picked up by nginx via a shared Docker volume.
+# ── Stage 2: Copy dist to shared volume on startup ─────────────────────────────
 FROM alpine:3.19
 WORKDIR /app
 COPY --from=builder /app/dist ./dist
+# Copies built files into the shared volume mounted at /output by docker-compose
 CMD ["sh", "-c", "cp -r /app/dist/. /output/ && echo 'Client PWA dist ready.'"]

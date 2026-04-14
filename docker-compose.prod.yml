@@ -53,7 +53,7 @@ services:
       args:
         - VITE_API_URL=${VITE_API_URL}
     volumes:
-      - admin_dist:/app/dist
+      - admin_dist:/output
     restart: "no"
 
   # ── Client PWA (React build) ───────────────────────────────────────────────
@@ -63,7 +63,7 @@ services:
       args:
         - VITE_API_URL=${VITE_API_URL}
     volumes:
-      - client_dist:/app/dist
+      - client_dist:/output
     restart: "no"
 
   # ── Nginx Reverse Proxy ────────────────────────────────────────────────────
