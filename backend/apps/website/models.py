@@ -10,10 +10,10 @@ class WebsiteSettings(models.Model):
     hero_title = models.CharField(max_length=255, default='Beautiful digital lending for everyday ambition.')
     hero_description = models.TextField(default='IntZam helps individuals and growing businesses access flexible loans with transparent pricing, simple onboarding, and a modern mobile-first experience.')
     hero_primary_cta_text = models.CharField(max_length=100, default='Start an application')
-    hero_primary_cta_url = models.CharField(max_length=255, default='/client-pwa/')
+    hero_primary_cta_url = models.CharField(max_length=255, default='/app/')
     hero_secondary_cta_text = models.CharField(max_length=100, default='Explore products')
     hero_secondary_cta_url = models.CharField(max_length=255, default='#products')
-    client_portal_url = models.CharField(max_length=255, default='/client-pwa/')
+    client_portal_url = models.CharField(max_length=255, default='/app/')
     staff_portal_url = models.CharField(max_length=255, default='/admin-frontend/')
     zambia_focus_copy = models.CharField(max_length=255, default='Designed for Zambia\'s civil servants, salaried professionals, and growing households.')
     audience_intro = models.TextField(default='Especially relevant for civil servants, teachers, nurses, and other dependable earners who need a simpler, more respectful lending experience.')
@@ -309,7 +309,7 @@ def bootstrap_website_content():
             'hero_title': 'Launch richer public content around your lending platform.',
             'hero_description': 'Use admin-managed sections, blocks, and images to keep the public website fresh without changing code.',
             'hero_primary_cta_text': 'Apply Now',
-            'hero_primary_cta_url': '/client-pwa/',
+            'hero_primary_cta_url': '/app/',
             'hero_secondary_cta_text': 'Open Calculator',
             'hero_secondary_cta_url': '/calculator/',
             'show_in_nav': False,
@@ -323,7 +323,7 @@ def bootstrap_website_content():
             'hero_title': 'Built to make lending feel more human, clear, and dependable in Zambia.',
             'hero_description': 'Present your mission, values, and operating approach with a more polished and editable public experience.',
             'hero_primary_cta_text': 'Go to client portal',
-            'hero_primary_cta_url': '/client-pwa/',
+            'hero_primary_cta_url': '/app/',
             'hero_secondary_cta_text': 'Try the calculator',
             'hero_secondary_cta_url': '/calculator/',
             'show_in_nav': True,

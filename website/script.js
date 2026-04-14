@@ -150,7 +150,7 @@ function renderProducts(products, clientPortalUrl) {
           <li>${escapeHtml(`Interest rate ${Number(product.interest_rate || 0)}%`)}</li>
         </ul>
         <div class="hero-actions" style="margin-top: 18px;">
-          <a class="btn btn-secondary" href="${escapeHtml(clientPortalUrl || '/client-pwa/')}">Apply for this product</a>
+          <a class="btn btn-secondary" href="${escapeHtml(clientPortalUrl || '/app/')}">Apply for this product</a>
         </div>
       </article>
     `;
