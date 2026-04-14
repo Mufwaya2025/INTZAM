@@ -38,7 +38,10 @@ services:
     build: ./website
     command: >
       sh -c "python manage.py migrate --noinput &&
+             cp -r /app/staticfiles/. /website_static/ &&
              gunicorn web_project.wsgi:application --bind 0.0.0.0:8001 --workers 2 --timeout 120"
+    volumes:
+      - website_static:/website_static
     env_file:
       - ./website/.env.production
     depends_on:
@@ -77,6 +80,7 @@ services:
       - ./nginx/ssl:/etc/nginx/ssl:ro
       - admin_dist:/usr/share/nginx/admin:ro
       - client_dist:/usr/share/nginx/client:ro
+      - website_static:/usr/share/nginx/website_static:ro
       - media_files:/app/media:ro
       - certbot_www:/var/www/certbot:ro
       - certbot_certs:/etc/letsencrypt:ro
@@ -101,5 +105,6 @@ volumes:
   media_files:
   admin_dist:
   client_dist:
+  website_static:
   certbot_www:
   certbot_certs:
