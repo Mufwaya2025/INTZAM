@@ -151,9 +151,10 @@ export default function QualifiedBasePage() {
     );
 
     // Products the client can access with the given cap
-    const qualifyingProducts = products.filter(p =>
+    const _qualifyingProducts = products.filter(p =>
         !amount || Number(amount) >= Number(p.min_amount)
     );
+    void _qualifyingProducts;
 
     return (
         <div>
