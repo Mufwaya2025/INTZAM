@@ -140,10 +140,10 @@ export default function AccountingPage({ initialTab = 'trial-balance' }: Account
         <div>
             <div className="tabs">
                 {([
-                    { id: 'disbursements', label: `💸 Disbursements Queue${disbursementQueue.length ? ` (${disbursementQueue.length})` : ''}` },
-                    { id: 'trial-balance', label: '⚖️ Trial Balance' },
-                    { id: 'accounts', label: '📒 Chart of Accounts' },
-                    { id: 'journal', label: '📝 Journal Entries' },
+                    { id: 'disbursements', label: `Disbursements Queue${disbursementQueue.length ? ` (${disbursementQueue.length})` : ''}` },
+                    { id: 'trial-balance', label: 'Trial Balance' },
+                    { id: 'accounts', label: 'Chart of Accounts' },
+                    { id: 'journal', label: 'Journal Entries' },
                 ] as { id: AccountingTab; label: string }[]).map(tab => (
                     <div key={tab.id} className={`tab ${activeTab === tab.id ? 'active' : ''}`} onClick={() => setActiveTab(tab.id)}>
                         {tab.label}
@@ -161,7 +161,7 @@ export default function AccountingPage({ initialTab = 'trial-balance' }: Account
                     </div>
                     {disbursementQueue.length === 0 ? (
                         <div className="empty-state">
-                            <div className="empty-state-icon">💸</div>
+                            <div className="empty-state-icon">ZMW</div>
                             <h3>No Pending Disbursements</h3>
                             <p>Approved loans waiting for payout will appear here.</p>
                         </div>
@@ -467,7 +467,7 @@ export default function AccountingPage({ initialTab = 'trial-balance' }: Account
                     </div>
                     {journal.length === 0 ? (
                         <div className="empty-state">
-                            <div className="empty-state-icon">📝</div>
+                            <div className="empty-state-icon">JE</div>
                             <h3>No Journal Entries</h3>
                             <p>Journal entries are created automatically when loans are disbursed and repaid.</p>
                         </div>
@@ -487,7 +487,7 @@ export default function AccountingPage({ initialTab = 'trial-balance' }: Account
                                 <tbody>
                                     {journal.map(entry => (
                                         <tr key={entry.id}>
-                                            <td style={{ fontFamily: 'monospace' }}>JE-{entry.id}</td>
+                                            <td style={{ fontFamily: 'monospace' }}>{entry.reference_id || `JE-${entry.id}`}</td>
                                             <td>{entry.description}</td>
                                             <td>{entry.date}</td>
                                             <td style={{ textAlign: 'right', fontFamily: 'monospace' }}>ZMW {Number(entry.total_debit || 0).toLocaleString()}</td>
