@@ -4,6 +4,7 @@ import hmac
 import logging
 import os
 from datetime import date, datetime
+from decimal import Decimal
 
 from django.utils import timezone
 from django.db.models import Sum
@@ -25,6 +26,7 @@ class LedgerAccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = LedgerAccount
         fields = '__all__'
+        read_only_fields = ['id', 'balance', 'created_at']
 
 
 class JournalLineSerializer(serializers.ModelSerializer):
@@ -47,25 +49,55 @@ class JournalEntrySerializer(serializers.ModelSerializer):
 
 
 class JournalEntryWriteSerializer(serializers.ModelSerializer):
-    lines = JournalLineSerializer(many=True)
+    class JournalLineWriteSerializer(serializers.Serializer):
+        account = serializers.PrimaryKeyRelatedField(queryset=LedgerAccount.objects.filter(is_active=True))
+        debit = serializers.DecimalField(max_digits=20, decimal_places=2, required=False, default=Decimal('0.00'))
+        credit = serializers.DecimalField(max_digits=20, decimal_places=2, required=False, default=Decimal('0.00'))
+        description = serializers.CharField(max_length=500, required=False, allow_blank=True)
+
+        def validate(self, attrs):
+            debit = attrs.get('debit') or Decimal('0.00')
+            credit = attrs.get('credit') or Decimal('0.00')
+            if debit < 0 or credit < 0:
+                raise serializers.ValidationError('Journal lines cannot contain negative values.')
+            if debit == 0 and credit == 0:
+                raise serializers.ValidationError('Journal lines must contain a debit or a credit amount.')
+            if debit > 0 and credit > 0:
+                raise serializers.ValidationError('Journal lines cannot contain both debit and credit amounts.')
+            return attrs
+
+    lines = JournalLineWriteSerializer(many=True)
 
     class Meta:
         model = JournalEntry
-        fields = '__all__'
+        fields = ['id', 'reference_id', 'description', 'date', 'posted_by', 'is_posted', 'created_at', 'lines']
+        read_only_fields = ['id', 'posted_by', 'is_posted', 'created_at']
+
+    def validate_lines(self, lines):
+        if not lines:
+            raise serializers.ValidationError('Journal entry must include at least one line.')
+        total_debit = sum((line.get('debit') or Decimal('0.00')) for line in lines)
+        total_credit = sum((line.get('credit') or Decimal('0.00')) for line in lines)
+        if total_debit != total_credit:
+            raise serializers.ValidationError('Journal entry is not balanced.')
+        return lines
 
     def create(self, validated_data):
         lines_data = validated_data.pop('lines')
         request = self.context.get('request')
-        posted_by = validated_data['posted_by']
+        posted_by = ''
         if request and request.user.is_authenticated:
             posted_by = request.user.get_full_name() or request.user.username
-        return post_journal_entry(
-            reference_id=validated_data['reference_id'],
-            description=validated_data['description'],
-            posted_by=posted_by,
-            entry_date=validated_data.get('date'),
-            lines=lines_data,
-        )
+        try:
+            return post_journal_entry(
+                reference_id=validated_data['reference_id'],
+                description=validated_data['description'],
+                posted_by=posted_by,
+                entry_date=validated_data.get('date'),
+                lines=lines_data,
+            )
+        except ValueError as exc:
+            raise serializers.ValidationError({'lines': [str(exc)]}) from exc
 
 
 class CanUseAccounting(permissions.BasePermission):
@@ -187,8 +219,9 @@ class OdooMonthlyReportView(APIView):
             status__in=[LoanStatus.ACTIVE, LoanStatus.OVERDUE],
             days_overdue__gte=30,
         )
-        par_outstanding = float(par_loans.aggregate(
-            total=Sum('total_repayable'))['total'] or 0)
+        par_total_repayable = float(par_loans.aggregate(total=Sum('total_repayable'))['total'] or 0)
+        par_repaid = float(par_loans.aggregate(total=Sum('repaid_amount'))['total'] or 0)
+        par_outstanding = par_total_repayable - par_repaid
         par_ratio = round(par_outstanding / total_net * 100, 2) if total_net > 0 else 0.0
 
         # ── Section B: Odoo balances ───────────────────────────────────────────

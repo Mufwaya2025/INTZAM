@@ -44,6 +44,9 @@ def ensure_default_accounts():
 
 
 def _normalize_journal_lines(lines):
+    if not lines:
+        raise ValueError('Journal entry must include at least one line.')
+
     total_debit = ZERO
     total_credit = ZERO
     normalized_lines = []
@@ -55,6 +58,8 @@ def _normalize_journal_lines(lines):
             raise ValueError('Journal lines cannot contain negative values.')
         if debit == ZERO and credit == ZERO:
             raise ValueError('Journal lines must contain a debit or a credit amount.')
+        if debit > ZERO and credit > ZERO:
+            raise ValueError('Journal lines cannot contain both debit and credit amounts.')
 
         normalized_lines.append({
             'account': line['account'],
