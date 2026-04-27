@@ -1,9 +1,42 @@
 from decimal import Decimal
+from html import unescape
 
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 
 from .models import Client, KYCSubmission, QualifiedBase
+
+
+def proper_person_name(value):
+    normalized = str(value or '').replace('&nbps;', ' ').replace('&nbsp;', ' ')
+    normalized = unescape(normalized).replace('\xa0', ' ')
+    return ' '.join(normalized.split()).title()
+
+
+def get_client_display_name(client):
+    if not client:
+        return ''
+
+    user = getattr(client, 'user', None)
+    user_name = proper_person_name(
+        ' '.join(
+            part for part in [
+                getattr(user, 'first_name', ''),
+                getattr(user, 'last_name', ''),
+            ]
+            if part
+        )
+    ) if user else ''
+    if user_name:
+        return user_name
+
+    qualified_record = get_client_qualified_record(client)
+    if qualified_record:
+        qualified_name = proper_person_name(f'{qualified_record.first_name} {qualified_record.last_name}')
+        if qualified_name:
+            return qualified_name
+
+    return proper_person_name(client.name)
 
 
 def sync_client_profile_for_user(user):

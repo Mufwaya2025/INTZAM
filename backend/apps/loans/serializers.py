@@ -4,7 +4,12 @@ from rest_framework import serializers
 from .models import CGRateTransaction, Loan, LoanDocument, Transaction, CollectionActivity
 from apps.core.serializers import ClientSerializer, KYCSubmissionSerializer, LoanProductSerializer
 from apps.core.models import Client, KYCSection
-from apps.core.utils import get_client_max_borrow_amount, get_client_qualified_record, sync_client_profile_for_user
+from apps.core.utils import (
+    get_client_display_name,
+    get_client_max_borrow_amount,
+    get_client_qualified_record,
+    sync_client_profile_for_user,
+)
 
 
 QUALIFIED_BASE_REJECTION_MESSAGE = (
@@ -43,7 +48,12 @@ class CollectionActivitySerializer(serializers.ModelSerializer):
 
 class CGRateTransactionSerializer(serializers.ModelSerializer):
     loan_number = serializers.CharField(source='loan.loan_number', read_only=True)
-    client_name = serializers.CharField(source='loan.client.name', read_only=True)
+    client_name = serializers.SerializerMethodField()
+
+    def get_client_name(self, obj):
+        if obj.loan_id and obj.loan:
+            return get_client_display_name(obj.loan.client)
+        return obj.name
 
     class Meta:
         model = CGRateTransaction

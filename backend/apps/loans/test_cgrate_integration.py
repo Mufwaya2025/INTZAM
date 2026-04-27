@@ -125,3 +125,35 @@ class CGRateIntegrationTests(APITestCase):
             CGRateTransaction.objects.filter(transaction_type=CGRateTransactionType.DISBURSEMENT).count(),
             1,
         )
+
+    @override_settings(CGRATE_ENABLED=False)
+    def test_cgrate_disbursement_uses_clean_customer_name(self):
+        self.client_profile.name = 'musanide&nbps;lubunda'
+        self.client_profile.save(update_fields=['name'])
+        QualifiedBase.objects.all().delete()
+
+        self._auth(self.accountant)
+        response = self.client.post(f'/api/v1/loans/{self.loan.id}/cgrate-disburse/', {}, format='json')
+
+        self.assertEqual(response.status_code, 201, response.data)
+        txn = CGRateTransaction.objects.get(transaction_type=CGRateTransactionType.DISBURSEMENT)
+        self.assertEqual(txn.name, 'Musanide Lubunda')
+        self.assertEqual(response.data['client_name'], 'Musanide Lubunda')
+
+    @override_settings(CGRATE_ENABLED=False)
+    def test_cgrate_collection_uses_clean_customer_name(self):
+        self.client_profile.name = 'musanide&nbsp;lubunda'
+        self.client_profile.save(update_fields=['name'])
+        QualifiedBase.objects.all().delete()
+
+        self._auth(self.client_user)
+        response = self.client.post(
+            f'/api/v1/loans/{self.loan.id}/cgrate-collect/',
+            {'amount': '100'},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 201, response.data)
+        txn = CGRateTransaction.objects.get(transaction_type=CGRateTransactionType.COLLECTION)
+        self.assertEqual(txn.name, 'Musanide Lubunda')
+        self.assertEqual(response.data['client_name'], 'Musanide Lubunda')

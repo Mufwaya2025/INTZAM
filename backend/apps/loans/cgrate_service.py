@@ -11,6 +11,7 @@ import requests
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
+from apps.core.utils import get_client_display_name
 
 from .models import (
     CGRateServiceProvider,
@@ -76,10 +77,11 @@ class CGRatePaymentService:
         phone = normalize_zambian_phone(loan.client.phone)
         provider = detect_provider(phone)
         reference = self._reference('DISB', loan.loan_number)
+        customer_name = get_client_display_name(loan.client)
         txn = CGRateTransaction.objects.create(
             loan=loan,
             transaction_type=CGRateTransactionType.DISBURSEMENT,
-            name=loan.client.name,
+            name=customer_name,
             email=loan.client.email,
             phone_number=phone,
             amount=-amount,
@@ -97,10 +99,11 @@ class CGRatePaymentService:
         phone = normalize_zambian_phone(loan.client.phone)
         provider = detect_provider(phone)
         reference = self._reference('PAY', loan.loan_number)
+        customer_name = get_client_display_name(loan.client)
         txn = CGRateTransaction.objects.create(
             loan=loan,
             transaction_type=CGRateTransactionType.COLLECTION,
-            name=loan.client.name,
+            name=customer_name,
             email=loan.client.email,
             phone_number=phone,
             amount=amount,
