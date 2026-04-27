@@ -5,7 +5,7 @@ from rest_framework.test import APIRequestFactory, force_authenticate
 
 from apps.authentication.models import User
 from apps.accounting.models import JournalEntry, LedgerAccount
-from apps.accounting.services import ensure_opening_bank_balance, post_journal_entry, sync_loan_disbursement_journal
+from apps.accounting.services import ensure_default_accounts, post_journal_entry, sync_loan_disbursement_journal
 from apps.core.models import Client, InterestType, LoanProduct
 from .models import Loan, LoanStatus, TransactionType
 from .services import calculate_loan_terms
@@ -200,6 +200,17 @@ class LoanCalculatorViewTests(TestCase):
             status=LoanStatus.APPROVED,
         )
 
+        accounts = ensure_default_accounts()
+        post_journal_entry(
+            reference_id='TEST-CGRATE-WALLET-FUNDING',
+            description='Explicit CGRate wallet funding',
+            posted_by=accountant.username,
+            lines=[
+                {'account': accounts['1001'], 'debit': 20000, 'description': 'Wallet cash funding'},
+                {'account': accounts['3001'], 'credit': 20000, 'description': 'Funding source'},
+            ],
+        )
+
         request = APIRequestFactory().post(f'/loans/{loan.id}/disburse/', {}, format='json')
         force_authenticate(request, user=accountant)
 
@@ -212,7 +223,7 @@ class LoanCalculatorViewTests(TestCase):
         self.assertEqual(loan.transactions.count(), 1)
         self.assertEqual(loan.transactions.first().transaction_type, TransactionType.DISBURSEMENT)
         self.assertEqual(JournalEntry.objects.count(), 2)
-        self.assertTrue(JournalEntry.objects.filter(reference_id='OPENING-BANK-BALANCE').exists())
+        self.assertFalse(JournalEntry.objects.filter(reference_id='OPENING-BANK-BALANCE').exists())
         self.assertTrue(JournalEntry.objects.filter(reference_id=f'LOAN-DISBURSEMENT-{loan.loan_number}').exists())
         self.assertEqual(LedgerAccount.objects.get(code='1001').balance, 19000)
         self.assertEqual(LedgerAccount.objects.get(code='1100').balance, 1000)
@@ -275,8 +286,9 @@ class LoanCalculatorViewTests(TestCase):
         self.assertEqual(loan.status, LoanStatus.APPROVED)
         self.assertIsNone(loan.disbursement_date)
         self.assertEqual(loan.transactions.count(), 0)
-        self.assertEqual(JournalEntry.objects.count(), 1)
-        self.assertEqual(LedgerAccount.objects.get(code='1001').balance, 20000)
+        self.assertEqual(JournalEntry.objects.count(), 0)
+        self.assertFalse(LedgerAccount.objects.filter(code='1001', balance__gt=0).exists())
+        self.assertFalse(JournalEntry.objects.filter(reference_id='OPENING-BANK-BALANCE').exists())
 
     def test_existing_disbursement_entry_can_be_synced_with_receivable_lines(self):
         accountant = User.objects.create_user(
@@ -322,7 +334,16 @@ class LoanCalculatorViewTests(TestCase):
             disbursement_date=date(2026, 3, 13),
         )
 
-        accounts = ensure_opening_bank_balance(posted_by='System')
+        accounts = ensure_default_accounts()
+        post_journal_entry(
+            reference_id='TEST-CGRATE-WALLET-FUNDING',
+            description='Explicit CGRate wallet funding',
+            posted_by=accountant.username,
+            lines=[
+                {'account': accounts['1001'], 'debit': 20000, 'description': 'Wallet cash funding'},
+                {'account': accounts['3001'], 'credit': 20000, 'description': 'Funding source'},
+            ],
+        )
         post_journal_entry(
             reference_id=f'LOAN-DISBURSEMENT-{loan.loan_number}',
             description=f'Loan disbursement for {loan.loan_number}',
@@ -345,6 +366,7 @@ class LoanCalculatorViewTests(TestCase):
         self.assertEqual(LedgerAccount.objects.get(code='1200').balance, 250)
         self.assertEqual(LedgerAccount.objects.get(code='4001').balance, -180)
         self.assertEqual(LedgerAccount.objects.get(code='4100').balance, -70)
+        self.assertFalse(JournalEntry.objects.filter(reference_id='OPENING-BANK-BALANCE').exists())
 
     def test_accountant_can_return_approved_loan_to_underwriter(self):
         accountant = User.objects.create_user(

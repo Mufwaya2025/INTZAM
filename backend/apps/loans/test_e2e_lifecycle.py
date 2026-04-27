@@ -1,5 +1,6 @@
 from rest_framework.test import APITestCase
 
+from apps.accounting.services import ensure_default_accounts, post_journal_entry
 from apps.authentication.models import User
 from apps.core.models import (
     Client,
@@ -146,6 +147,16 @@ class ClientLoanLifecycleE2ETests(APITestCase):
         self.assertFalse(loan.transactions.filter(transaction_type=TransactionType.REPAYMENT).exists())
 
         self._auth(self.accountant)
+        accounts = ensure_default_accounts()
+        post_journal_entry(
+            reference_id='E2E-CGRATE-WALLET-FUNDING',
+            description='Explicit wallet funding for lifecycle test',
+            posted_by=self.accountant.username,
+            lines=[
+                {'account': accounts['1001'], 'debit': 2000, 'description': 'Wallet cash funding'},
+                {'account': accounts['3001'], 'credit': 2000, 'description': 'Funding source'},
+            ],
+        )
         disburse_response = self.client.post(f'/api/v1/loans/{loan_id}/disburse/', {}, format='json')
         self.assertEqual(disburse_response.status_code, 200, disburse_response.data)
         loan.refresh_from_db()

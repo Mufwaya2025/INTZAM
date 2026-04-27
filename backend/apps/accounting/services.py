@@ -117,6 +117,11 @@ def post_journal_entry(*, reference_id, description, posted_by, lines, entry_dat
 
 
 def ensure_opening_bank_balance(posted_by='System'):
+    """Legacy helper for demo setups that need seeded opening capital.
+
+    Production accounting flows should use explicit funding journals instead of
+    calling this implicitly from read or disbursement paths.
+    """
     accounts = ensure_default_accounts()
     if JournalEntry.objects.filter(reference_id=OPENING_BANK_REFERENCE).exists():
         return accounts
@@ -185,7 +190,7 @@ def _get_loan_accrual_breakdown(loan):
 
 @transaction.atomic
 def sync_loan_disbursement_journal(*, loan, posted_by):
-    accounts = ensure_opening_bank_balance(posted_by='System')
+    accounts = ensure_default_accounts()
     bank_account = accounts['1001']
     loan_portfolio_account = accounts['1100']
     interest_receivable_account = accounts['1200']

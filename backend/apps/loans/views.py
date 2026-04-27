@@ -27,7 +27,7 @@ from .serializers import (
 )
 from .cgrate_service import CGRatePaymentService
 from .services import calculate_loan_terms, calculate_payoff_quote, check_rollover_eligibility, calculate_rollover_fee
-from apps.accounting.services import ensure_opening_bank_balance, post_loan_disbursement
+from apps.accounting.services import post_loan_disbursement
 from apps.accounting.on_loan_approved import on_loan_disbursed
 from apps.accounting.on_payment_received import on_payment_received
 from apps.accounting.on_loan_written_off import on_loan_written_off, on_recovery_received
@@ -172,7 +172,6 @@ class DisburseLoanView(APIView):
 
         today = date.today()
         posted_by = request.user.get_full_name() or request.user.username
-        ensure_opening_bank_balance(posted_by='System')
 
         try:
             with transaction.atomic():
