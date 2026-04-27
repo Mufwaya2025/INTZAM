@@ -185,6 +185,7 @@ const DR_COLS: { key: string; label: string; fmt?: 'currency' | 'pct' | 'stage' 
     { key: 'purpose',             label: 'Purpose' },
     { key: 'disbursed_amount',    label: 'Disbursed', fmt: 'currency' },
     { key: 'total_repayable',     label: 'Total Repayable', fmt: 'currency' },
+    { key: 'expected_interest',   label: 'Expected Interest', fmt: 'currency' },
     { key: 'monthly_payment',     label: 'Installment', fmt: 'currency' },
     { key: 'term_months',         label: 'Term (mo.)' },
     { key: 'interest_rate',       label: 'Rate %', fmt: 'pct' },
@@ -264,6 +265,7 @@ function DisbursementRegisterTable({ data: report }: { data: any }) {
                 {[
                     { label: 'Total Loans',      value: summary.total_loans?.toLocaleString() },
                     { label: 'Total Disbursed',  value: formatMoney(summary.total_disbursed) },
+                    { label: 'Expected Interest',value: formatMoney(summary.total_expected_interest) },
                     { label: 'Total Outstanding',value: formatMoney(summary.total_outstanding) },
                     { label: 'PAR >30 Loans',    value: summary.par30_count, highlight: summary.par30_count > 0 },
                     { label: 'PAR >30 Amount',   value: formatMoney(summary.par30_amount), highlight: summary.par30_amount > 0 },
@@ -305,7 +307,7 @@ function DisbursementRegisterTable({ data: report }: { data: any }) {
                                 <th key={c.key} style={{
                                     padding: '7px 10px', fontWeight: 700, fontSize: 11,
                                     textAlign: ['disbursed_amount','total_repayable','monthly_payment',
-                                        'outstanding_balance','repaid_amount','monthly_income'].includes(c.key)
+                                        'expected_interest','outstanding_balance','repaid_amount','monthly_income'].includes(c.key)
                                         ? 'right' : 'left',
                                     whiteSpace: 'nowrap', border: '1px solid #d0d0d0',
                                 }}>
@@ -326,7 +328,7 @@ function DisbursementRegisterTable({ data: report }: { data: any }) {
                                     <td key={col.key} style={{
                                         padding: '5px 10px', border: '1px solid #e8e8e8',
                                         textAlign: ['disbursed_amount','total_repayable','monthly_payment',
-                                            'outstanding_balance','repaid_amount','monthly_income'].includes(col.key)
+                                            'expected_interest','outstanding_balance','repaid_amount','monthly_income'].includes(col.key)
                                             ? 'right' : 'left',
                                         whiteSpace: 'nowrap',
                                     }}>
@@ -341,7 +343,7 @@ function DisbursementRegisterTable({ data: report }: { data: any }) {
                         <tfoot>
                             <tr style={{ background: '#f0f0f0', fontWeight: 700 }}>
                                 {DR_COLS.map(col => {
-                                    const numCols = ['disbursed_amount','total_repayable','repaid_amount','outstanding_balance','monthly_income'];
+                                    const numCols = ['disbursed_amount','total_repayable','expected_interest','repaid_amount','outstanding_balance','monthly_income'];
                                     if (col.key === 'client_name') return <td key={col.key} style={{ padding: '6px 10px', border: '1px solid #d0d0d0' }}>TOTAL ({rows.length})</td>;
                                     if (numCols.includes(col.key)) {
                                         const sum = rows.reduce((acc: number, r: any) => acc + (r[col.key] || 0), 0);
@@ -375,6 +377,36 @@ const AGING_BUCKETS = [
 function fmtN(n: number) {
     if (!n) return '-';
     return Math.round(n).toLocaleString();
+}
+
+function isMoneyField(key: string) {
+    const normalized = key.toLowerCase();
+    const nonMoneyFields = [
+        'count', 'loan_count', 'total_loans', 'total_vintages', 'window_days',
+        'days', 'days_overdue', 'days_until_due', 'mob', 'term_months',
+        'avg_term_months', 'interest_rate', 'avg_interest_rate', 'pd', 'lgd',
+        'par_ratio', 'par_30_ratio', 'par_90_ratio', 'par30_rate', 'par90_rate',
+        'collection_rate', 'avg_collection_rate', 'loss_rate', 'default_rate',
+        'fulfillment_rate', 'overdue_loans', 'active', 'closed', 'written_off',
+        'broken', 'fulfilled', 'total'
+    ];
+    if (nonMoneyFields.includes(normalized)) return false;
+    return [
+        'amount', 'disbursed', 'repaid', 'repayable', 'outstanding', 'arrears',
+        'expected', 'interest', 'income', 'principal', 'penalty', 'pipeline',
+        'ecl', 'exposure', 'cash', 'inflows', 'outflows', 'net', 'balance'
+    ].some(token => normalized.includes(token));
+}
+
+function formatReportValue(key: string, value: any) {
+    if (typeof value === 'boolean') {
+        return <span className={`badge ${value ? 'badge-success' : 'badge-error'}`}>{value ? 'Yes' : 'No'}</span>;
+    }
+    if (typeof value === 'number') {
+        if (isMoneyField(key)) return formatMoney(value);
+        return Number.isInteger(value) ? value.toLocaleString() : value.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    }
+    return String(value ?? '—');
 }
 
 function AgingProvisionTable({ data }: { data: any }) {
@@ -504,7 +536,7 @@ function ReportOutput({ data, reportId, ecWindowDays, onEcWindowChange, vaProduc
                 <div className="stat-grid" style={{ marginBottom: 20 }}>
                     {Object.entries(data.summary).map(([key, val]: any) => (
                         <div key={key} className="stat-card">
-                            <div className="stat-value">{typeof val === 'number' ? formatMoney(val) : val}</div>
+                            <div className="stat-value">{formatReportValue(key, val)}</div>
                             <div className="stat-label">{key.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}</div>
                         </div>
                     ))}
@@ -515,6 +547,7 @@ function ReportOutput({ data, reportId, ecWindowDays, onEcWindowChange, vaProduc
             return (
                 <div className="stat-grid" style={{ marginBottom: 20 }}>
                     <div className="stat-card"><div className="stat-value" style={{ color: 'var(--success)' }}>{formatMoney(data.income.interest_income)}</div><div className="stat-label">Interest Income</div></div>
+                    <div className="stat-card"><div className="stat-value">{formatMoney(data.income.repayment_principal_component)}</div><div className="stat-label">Principal Collected</div></div>
                     <div className="stat-card"><div className="stat-value" style={{ color: 'var(--warning)' }}>{formatMoney(data.income.penalty_income)}</div><div className="stat-label">Penalty Income</div></div>
                     <div className="stat-card"><div className="stat-value" style={{ color: 'var(--primary-600)' }}>{formatMoney(data.income.total_income)}</div><div className="stat-label">Total Income</div></div>
                     <div className="stat-card"><div className="stat-value" style={{ color: 'var(--error)' }}>{formatMoney(data.disbursements)}</div><div className="stat-label">Disbursements</div></div>
@@ -541,7 +574,7 @@ function ReportOutput({ data, reportId, ecWindowDays, onEcWindowChange, vaProduc
 
     // Render data table
     const renderTable = () => {
-        const tableData = data.data || data.accounts || data.cohorts || data.stages || [];
+        const tableData = data.data || data.accounts || data.cohorts || data.stages || data.by_product || [];
         if (!tableData.length) return <div className="empty-state"><div className="empty-state-icon">📊</div><h3>No Data</h3><p>No records found for this report.</p></div>;
 
         const keys = Object.keys(tableData[0]);
@@ -599,7 +632,7 @@ function ExpectedCollectionTable({ data: report, windowDays, onWindowChange }: {
     const s = report.summary || {};
 
     const exportCSV = () => {
-        const cols = ['loan_number','client_name','client_phone','product','installment_no','due_date','days_until_due','installment_amount','arrears','total_expected','outstanding_balance','days_overdue','ptp_status','ptp_date','ptp_amount','collection_priority'];
+        const cols = ['loan_number','client_name','client_phone','product','installment_no','due_date','days_until_due','installment_amount','arrears','total_expected','expected_interest','outstanding_balance','days_overdue','ptp_status','ptp_date','ptp_amount','collection_priority'];
         const header = cols.join(',');
         const body = rows.map(r => cols.map(c => {
             const v = r[c] ?? '';
@@ -644,6 +677,10 @@ function ExpectedCollectionTable({ data: report, windowDays, onWindowChange }: {
                     <div className="stat-label">Total Expected</div>
                 </div>
                 <div className="stat-card">
+                    <div className="stat-value" style={{ color: 'var(--success)' }}>{formatMoney(s.total_expected_interest)}</div>
+                    <div className="stat-label">Expected Interest</div>
+                </div>
+                <div className="stat-card">
                     <div className="stat-value" style={{ color: s.overdue_loans > 0 ? 'var(--error)' : 'var(--success)' }}>{s.overdue_loans ?? 0}</div>
                     <div className="stat-label">Overdue Loans</div>
                 </div>
@@ -676,6 +713,7 @@ function ExpectedCollectionTable({ data: report, windowDays, onWindowChange }: {
                                 <th>Installment Amt</th>
                                 <th>Arrears</th>
                                 <th>Total Expected</th>
+                                <th>Expected Interest</th>
                                 <th>Outstanding Bal.</th>
                                 <th>DPD</th>
                                 <th>PTP Status</th>
@@ -704,6 +742,7 @@ function ExpectedCollectionTable({ data: report, windowDays, onWindowChange }: {
                                             {r.arrears > 0 ? formatMoney(r.arrears) : '—'}
                                         </td>
                                         <td style={{ fontWeight: 600 }}>{formatMoney(r.total_expected)}</td>
+                                        <td>{formatMoney(r.expected_interest)}</td>
                                         <td>{formatMoney(r.outstanding_balance)}</td>
                                         <td style={{ color: r.days_overdue > 0 ? 'var(--error)' : 'inherit' }}>{r.days_overdue}</td>
                                         <td>{r.ptp_status && r.ptp_status !== 'NONE' ? <span className={`badge ${ptpBadge(r.ptp_status)}`}>{r.ptp_status}</span> : '—'}</td>
@@ -720,6 +759,7 @@ function ExpectedCollectionTable({ data: report, windowDays, onWindowChange }: {
                                 <td>{formatMoney(rows.reduce((a, r) => a + Number(r.installment_amount), 0))}</td>
                                 <td style={{ color: 'var(--error)' }}>{formatMoney(rows.reduce((a, r) => a + Number(r.arrears), 0))}</td>
                                 <td>{formatMoney(rows.reduce((a, r) => a + Number(r.total_expected), 0))}</td>
+                                <td>{formatMoney(rows.reduce((a, r) => a + Number(r.expected_interest), 0))}</td>
                                 <td>{formatMoney(rows.reduce((a, r) => a + Number(r.outstanding_balance), 0))}</td>
                                 <td colSpan={5}></td>
                             </tr>
@@ -755,7 +795,7 @@ function VintageAnalysisTable({ data: report, selectedProduct, onProductChange }
     };
 
     const exportCSV = () => {
-        const cols = ['vintage','mob','vintage_status','count','disbursed','avg_loan_size','avg_term_months','avg_interest_rate','active','closed','written_off','repaid','outstanding','par30_rate','par90_rate','collection_rate','loss_rate','default_rate'];
+        const cols = ['vintage','mob','vintage_status','count','disbursed','expected_interest','avg_loan_size','avg_term_months','avg_interest_rate','active','closed','written_off','repaid','outstanding','par30_rate','par90_rate','collection_rate','loss_rate','default_rate'];
         const header = cols.join(',');
         const body = rows.map(r => cols.map(c => r[c] ?? '').join(',')).join('\n');
         const blob = new Blob([header + '\n' + body], { type: 'text/csv' });
@@ -797,6 +837,10 @@ function VintageAnalysisTable({ data: report, selectedProduct, onProductChange }
                     <div className="stat-label">Total Disbursed</div>
                 </div>
                 <div className="stat-card">
+                    <div className="stat-value" style={{ color: 'var(--success)' }}>{formatMoney(s.total_expected_interest)}</div>
+                    <div className="stat-label">Expected Interest</div>
+                </div>
+                <div className="stat-card">
                     <div className="stat-value" style={{ color: 'var(--success)' }}>{formatMoney(s.total_repaid)}</div>
                     <div className="stat-label">Total Repaid</div>
                 </div>
@@ -819,6 +863,7 @@ function VintageAnalysisTable({ data: report, selectedProduct, onProductChange }
                                 <th>Status</th>
                                 <th>Loans</th>
                                 <th>Disbursed</th>
+                                <th>Expected Interest</th>
                                 <th>Avg Loan</th>
                                 <th>Avg Term</th>
                                 <th>Avg Rate</th>
@@ -842,6 +887,7 @@ function VintageAnalysisTable({ data: report, selectedProduct, onProductChange }
                                     <td><span className={`badge ${statusBadge(r.vintage_status)}`}>{r.vintage_status}</span></td>
                                     <td>{r.count}</td>
                                     <td>{formatMoney(r.disbursed)}</td>
+                                    <td>{formatMoney(r.expected_interest)}</td>
                                     <td>{formatMoney(r.avg_loan_size)}</td>
                                     <td>{r.avg_term_months}m</td>
                                     <td>{r.avg_interest_rate}%</td>
@@ -863,6 +909,7 @@ function VintageAnalysisTable({ data: report, selectedProduct, onProductChange }
                                 <td colSpan={3}>Totals ({rows.length} vintages)</td>
                                 <td>{rows.reduce((a, r) => a + r.count, 0)}</td>
                                 <td>{formatMoney(rows.reduce((a, r) => a + r.disbursed, 0))}</td>
+                                <td>{formatMoney(rows.reduce((a, r) => a + r.expected_interest, 0))}</td>
                                 <td colSpan={3}></td>
                                 <td>{rows.reduce((a, r) => a + r.active, 0)}</td>
                                 <td>{rows.reduce((a, r) => a + r.closed, 0)}</td>

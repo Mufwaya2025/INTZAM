@@ -9,6 +9,23 @@ from apps.loans.models import Loan, Transaction, LoanStatus, TransactionType
 from apps.core.models import Client, LoanProduct
 
 
+def loan_outstanding(loan):
+    return max(float(loan.total_repayable) - float(loan.repaid_amount), 0.0)
+
+
+def loan_expected_interest(loan):
+    return max(float(loan.total_repayable) - float(loan.amount), 0.0)
+
+
+def loan_interest_ratio(loan):
+    total_repayable = float(loan.total_repayable)
+    return loan_expected_interest(loan) / total_repayable if total_repayable else 0.0
+
+
+def loan_interest_component(loan, amount):
+    return round(float(amount) * loan_interest_ratio(loan), 2)
+
+
 class ReportView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -64,11 +81,12 @@ class ReportView(APIView):
         ).select_related('client', 'product').order_by('disbursement_date')
 
         data = []
-        total_disbursed = total_outstanding = par30_amount = 0.0
+        total_disbursed = total_outstanding = total_expected_interest = par30_amount = 0.0
         par30_count = 0
 
         for i, loan in enumerate(qs, start=1):
-            outstanding = float(loan.total_repayable) - float(loan.repaid_amount)
+            outstanding = loan_outstanding(loan)
+            expected_interest = loan_expected_interest(loan)
             days = loan.days_overdue
             monthly_income = float(loan.client.monthly_income)
             dti = round(float(loan.monthly_payment) / monthly_income * 100, 1) if monthly_income else None
@@ -79,6 +97,7 @@ class ReportView(APIView):
 
             total_disbursed  += float(loan.amount)
             total_outstanding += outstanding
+            total_expected_interest += expected_interest
             if days > 30:
                 par30_count  += 1
                 par30_amount += outstanding
@@ -101,6 +120,7 @@ class ReportView(APIView):
                 'purpose':               loan.purpose,
                 'disbursed_amount':      float(loan.amount),
                 'total_repayable':       float(loan.total_repayable),
+                'expected_interest':     round(expected_interest, 2),
                 'monthly_payment':       float(loan.monthly_payment),
                 'term_months':           loan.term_months,
                 'interest_rate':         float(loan.interest_rate),
@@ -125,6 +145,7 @@ class ReportView(APIView):
             'summary': {
                 'total_loans':      len(data),
                 'total_disbursed':  round(total_disbursed, 2),
+                'total_expected_interest': round(total_expected_interest, 2),
                 'total_outstanding': round(total_outstanding, 2),
                 'par30_count':      par30_count,
                 'par30_amount':     round(par30_amount, 2),
@@ -135,24 +156,51 @@ class ReportView(APIView):
         }
 
     def active_loan_portfolio(self, request, today):
-        loans = Loan.objects.filter(status__in=[LoanStatus.ACTIVE, LoanStatus.OVERDUE])
-        total_portfolio = loans.aggregate(
-            total=Sum('amount'),
-            total_outstanding=Sum('total_repayable'),
-            count=Count('id')
-        )
-        by_product = loans.values('product__name').annotate(
-            count=Count('id'),
-            total=Sum('amount')
-        )
+        loans = Loan.objects.filter(
+            status__in=[LoanStatus.ACTIVE, LoanStatus.OVERDUE]
+        ).select_related('product')
+        by_product_map = {}
+        total_disbursed = total_outstanding = total_expected_interest = 0.0
+
+        for loan in loans:
+            product_name = loan.product.name
+            outstanding = loan_outstanding(loan)
+            expected_interest = loan_expected_interest(loan)
+            total_disbursed += float(loan.amount)
+            total_outstanding += outstanding
+            total_expected_interest += expected_interest
+
+            if product_name not in by_product_map:
+                by_product_map[product_name] = {
+                    'product': product_name,
+                    'count': 0,
+                    'total_disbursed': 0.0,
+                    'expected_interest': 0.0,
+                    'total_outstanding': 0.0,
+                }
+            row = by_product_map[product_name]
+            row['count'] += 1
+            row['total_disbursed'] += float(loan.amount)
+            row['expected_interest'] += expected_interest
+            row['total_outstanding'] += outstanding
+
         return {
             'report': 'Active Loan Portfolio',
             'summary': {
-                'total_loans': total_portfolio['count'] or 0,
-                'total_disbursed': float(total_portfolio['total'] or 0),
-                'total_outstanding': float(total_portfolio['total_outstanding'] or 0),
+                'total_loans': loans.count(),
+                'total_disbursed': round(total_disbursed, 2),
+                'total_expected_interest': round(total_expected_interest, 2),
+                'total_outstanding': round(total_outstanding, 2),
             },
-            'by_product': list(by_product),
+            'by_product': [
+                {
+                    **row,
+                    'total_disbursed': round(row['total_disbursed'], 2),
+                    'expected_interest': round(row['expected_interest'], 2),
+                    'total_outstanding': round(row['total_outstanding'], 2),
+                }
+                for row in by_product_map.values()
+            ],
             'generated_at': str(today)
         }
 
@@ -188,7 +236,7 @@ class ReportView(APIView):
 
         for loan in loans:
             name = loan.product.name
-            outstanding = float(loan.total_repayable) - float(loan.repaid_amount)
+            outstanding = loan_outstanding(loan)
             days = loan.days_overdue
 
             if name not in products:
@@ -215,7 +263,7 @@ class ReportView(APIView):
         provision['total'] = round(total_provision, 2)
 
         total_portfolio = totals['total']
-        par_30_amount = sum(totals[b[0]] for b in BUCKETS if b[1] > 0)
+        par_30_amount = sum(totals[b[0]] for b in BUCKETS if b[1] > 30)
         par_90_amount = sum(totals[b[0]] for b in BUCKETS if b[1] > 90)
         par_30_ratio = round((par_30_amount / total_portfolio * 100), 1) if total_portfolio else 0
         par_90_ratio = round((par_90_amount / total_portfolio * 100), 1) if total_portfolio else 0
@@ -241,9 +289,17 @@ class ReportView(APIView):
             created_at__date__gte=start,
             created_at__date__lte=today
         )
-        interest_income = transactions.filter(
+        repayment_transactions = transactions.filter(
             transaction_type=TransactionType.REPAYMENT
-        ).aggregate(total=Sum('amount'))['total'] or 0
+        ).select_related('loan')
+        interest_income = sum(
+            loan_interest_component(t.loan, t.amount)
+            for t in repayment_transactions
+        )
+        repayment_principal_component = round(
+            sum(float(t.amount) for t in repayment_transactions) - interest_income,
+            2
+        )
 
         penalty_income = transactions.filter(
             transaction_type=TransactionType.PENALTY
@@ -260,6 +316,7 @@ class ReportView(APIView):
                 'interest_income': float(interest_income),
                 'penalty_income': float(penalty_income),
                 'total_income': float(interest_income) + float(penalty_income),
+                'repayment_principal_component': repayment_principal_component,
             },
             'disbursements': float(disbursements),
             'generated_at': str(today)
@@ -289,7 +346,7 @@ class ReportView(APIView):
             'loan_number': l.loan_number,
             'client': l.client.name,
             'phone': l.client.phone,
-            'outstanding': float(l.total_repayable) - float(l.repaid_amount),
+            'outstanding': loan_outstanding(l),
             'days_overdue': l.days_overdue,
             'ptp_status': l.ptp_status,
         } for l in overdue]
@@ -317,8 +374,9 @@ class ReportView(APIView):
                 continue
 
             days_until_due = (due_date - today).days  # negative = overdue
-            outstanding = float(l.total_repayable) - float(l.repaid_amount)
+            outstanding = loan_outstanding(l)
             installment_amount = float(l.next_payment_due)
+            interest_ratio = loan_interest_ratio(l)
 
             # Arrears: overdue installments not yet paid
             # If days_overdue > 0 and there's more than 1 installment missed,
@@ -328,6 +386,7 @@ class ReportView(APIView):
             missed = max(0, -days_until_due // 30) if days_until_due < 0 else 0
             arrears = round(min(missed * monthly, outstanding - installment_amount), 2) if missed > 0 and monthly > 0 else 0.0
             total_expected = round(installment_amount + arrears, 2)
+            expected_interest = round(total_expected * interest_ratio, 2)
 
             paid_count = int(float(l.repaid_amount) / monthly) if monthly > 0 else 0
             installment_no = f"{min(paid_count + 1, l.term_months)} of {l.term_months}"
@@ -350,6 +409,7 @@ class ReportView(APIView):
                 'installment_amount': installment_amount,
                 'arrears': arrears,
                 'total_expected': total_expected,
+                'expected_interest': expected_interest,
                 'outstanding_balance': round(outstanding, 2),
                 'days_overdue': l.days_overdue,
                 'ptp_status': l.ptp_status,
@@ -362,6 +422,7 @@ class ReportView(APIView):
         rows.sort(key=lambda r: (r['days_until_due'] >= 0, r['days_until_due']))
 
         total_expected = round(sum(r['total_expected'] for r in rows), 2)
+        total_expected_interest = round(sum(r['expected_interest'] for r in rows), 2)
         total_overdue = [r for r in rows if r['days_overdue'] > 0]
         total_overdue_amount = round(sum(r['arrears'] for r in total_overdue), 2)
         ptp_expected = round(sum(
@@ -373,6 +434,7 @@ class ReportView(APIView):
             'window_days': window,
             'total_loans_due': len(rows),
             'total_expected': total_expected,
+            'total_expected_interest': total_expected_interest,
             'overdue_loans': len(total_overdue),
             'total_arrears': total_overdue_amount,
             'ptp_pipeline': ptp_expected,
@@ -409,8 +471,9 @@ class ReportView(APIView):
             'product': l.product.name,
             'amount': float(l.amount),
             'total_repayable': float(l.total_repayable),
+            'expected_interest': round(loan_expected_interest(l), 2),
             'repaid': float(l.repaid_amount),
-            'outstanding': float(l.total_repayable) - float(l.repaid_amount),
+            'outstanding': loan_outstanding(l),
             'status': l.status,
             'term_months': l.term_months,
             'interest_rate': float(l.interest_rate),
@@ -439,18 +502,19 @@ class ReportView(APIView):
             disbursed = sum(float(l.amount) for l in cl)
             repaid = sum(float(l.repaid_amount) for l in cl)
             total_repayable = sum(float(l.total_repayable) for l in cl)
-            outstanding = total_repayable - repaid
+            expected_interest = sum(loan_expected_interest(l) for l in cl)
+            outstanding = sum(loan_outstanding(l) for l in cl)
 
             active_count     = sum(1 for l in cl if l.status == LoanStatus.ACTIVE)
             closed_count     = sum(1 for l in cl if l.status == LoanStatus.CLOSED)
             written_off_count= sum(1 for l in cl if l.status == LoanStatus.WRITTEN_OFF)
 
             par30_bal = sum(
-                float(l.total_repayable) - float(l.repaid_amount)
+                loan_outstanding(l)
                 for l in cl if l.days_overdue > 30
             )
             par90_bal = sum(
-                float(l.total_repayable) - float(l.repaid_amount)
+                loan_outstanding(l)
                 for l in cl if l.days_overdue > 90
             )
             written_off_amt = sum(float(l.amount) for l in cl if l.status == LoanStatus.WRITTEN_OFF)
@@ -482,6 +546,7 @@ class ReportView(APIView):
                 'vintage_status': status,
                 'count': count,
                 'disbursed': round(disbursed, 2),
+                'expected_interest': round(expected_interest, 2),
                 'avg_loan_size': avg_loan,
                 'avg_term_months': avg_term,
                 'avg_interest_rate': avg_rate,
@@ -499,6 +564,7 @@ class ReportView(APIView):
 
         all_products = list(LoanProduct.objects.values_list('name', flat=True).order_by('name'))
         total_disbursed = sum(r['disbursed'] for r in rows)
+        total_expected_interest = sum(r['expected_interest'] for r in rows)
         total_repaid    = sum(r['repaid'] for r in rows)
         avg_collection  = round(sum(r['collection_rate'] for r in rows) / len(rows), 1) if rows else 0
 
@@ -508,6 +574,7 @@ class ReportView(APIView):
                 'total_vintages': len(rows),
                 'total_loans': sum(r['count'] for r in rows),
                 'total_disbursed': round(total_disbursed, 2),
+                'total_expected_interest': round(total_expected_interest, 2),
                 'total_repaid': round(total_repaid, 2),
                 'avg_collection_rate': avg_collection,
             },
@@ -530,7 +597,7 @@ class ReportView(APIView):
                 days_overdue__gte=config['days'][0],
                 days_overdue__lte=config['days'][1],
             )
-            exposure = loans.aggregate(total=Sum('total_repayable'))['total'] or 0
+            exposure = sum(loan_outstanding(loan) for loan in loans)
             ecl = float(exposure) * config['pd'] * config['lgd']
             total_ecl += ecl
             result.append({
@@ -550,7 +617,7 @@ class ReportView(APIView):
             'client': l.client.name,
             'product': l.product.name,
             'amount': float(l.amount),
-            'outstanding': float(l.total_repayable) - float(l.repaid_amount),
+            'outstanding': loan_outstanding(l),
             'write_off_date': str(l.updated_at.date()),
         } for l in loans]
         total = sum(d['outstanding'] for d in data)
@@ -570,7 +637,7 @@ class DashboardStatsView(APIView):
         pending_loans = loans.filter(status=LoanStatus.PENDING_APPROVAL)
 
         total_portfolio = active_loans.aggregate(total=Sum('amount'))['total'] or 0
-        total_outstanding = active_loans.aggregate(total=Sum('total_repayable'))['total'] or 0
+        total_outstanding = sum(loan_outstanding(loan) for loan in active_loans)
         total_repaid = active_loans.aggregate(total=Sum('repaid_amount'))['total'] or 0
 
         # Monthly disbursements
