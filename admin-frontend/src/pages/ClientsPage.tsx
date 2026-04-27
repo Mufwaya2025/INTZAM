@@ -153,7 +153,7 @@ export default function ClientsPage() {
                                         </td>
                                         <td>{client.email}</td>
                                         <td>{client.phone}</td>
-                                        <td>${Number(client.monthly_income || 0).toLocaleString()}</td>
+                                        <td>ZMW {Number(client.monthly_income || 0).toLocaleString()}</td>
                                         <td><span className={`badge ${tierColors[client.tier] || 'badge-gray'}`}>{client.tier}</span></td>
                                         <td>
                                             <span className={`badge ${client.kyc_verified ? 'badge-success' : 'badge-error'}`}>

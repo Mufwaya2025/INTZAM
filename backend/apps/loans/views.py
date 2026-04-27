@@ -59,7 +59,7 @@ class LoanListCreateView(generics.ListCreateAPIView):
         loan = serializer.save()
         SystemLog.objects.create(
             action="Loan Application Submitted",
-            details=f"Loan {loan.loan_number} requested by {loan.client.name} for ${loan.amount}.",
+            details=f"Loan {loan.loan_number} requested by {loan.client.name} for ZMW {loan.amount}.",
             performed_by=self.request.user
         )
 
@@ -173,7 +173,7 @@ class DisburseLoanView(APIView):
 
                 SystemLog.objects.create(
                     action="Loan Disbursed",
-                    details=f"Loan {loan.loan_number} amount ${loan.amount} disbursed from Cash and Bank.",
+                    details=f"Loan {loan.loan_number} amount ZMW {loan.amount} disbursed from Cash and Bank.",
                     performed_by=request.user
                 )
         except ValueError as exc:
@@ -270,7 +270,7 @@ class RepaymentView(APIView):
 
         SystemLog.objects.create(
             action="Loan Repayment",
-            details=f"Processed repayment of ${amount} for loan {loan.loan_number}.",
+            details=f"Processed repayment of ZMW {amount} for loan {loan.loan_number}.",
             performed_by=request.user
         )
 
@@ -338,7 +338,7 @@ class SettleLoanView(APIView):
 
         SystemLog.objects.create(
             action="Loan Settled",
-            details=f"Processed early settlement of ${quote['total_payoff_amount']} for loan {loan.loan_number}.",
+            details=f"Processed early settlement of ZMW {quote['total_payoff_amount']} for loan {loan.loan_number}.",
             performed_by=request.user
         )
 
@@ -400,7 +400,7 @@ class RolloverView(APIView):
 
         SystemLog.objects.create(
             action="Loan Rolled Over",
-            details=f"Processed rollover for loan {loan.loan_number} for {extension_days} days. Fee: ${fee}.",
+            details=f"Processed rollover for loan {loan.loan_number} for {extension_days} days. Fee: ZMW {fee}.",
             performed_by=request.user
         )
 

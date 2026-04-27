@@ -34,7 +34,7 @@ You are an expert loan underwriter for IntZam Micro Fin Limited. Analyze the fol
 
 **Loan Application Details:**
 - Loan Number: {loan.loan_number}
-- Amount Requested: ${float(loan.amount):,.2f}
+- Amount Requested: ZMW {float(loan.amount):,.2f}
 - Term: {loan.term_months} months
 - Interest Rate: {float(loan.interest_rate)}%
 - Purpose: {loan.purpose}
@@ -43,15 +43,15 @@ You are an expert loan underwriter for IntZam Micro Fin Limited. Analyze the fol
 **Client Profile:**
 - Name: {client.name}
 - Employment Status: {client.employment_status}
-- Monthly Income: ${float(client.monthly_income):,.2f}
+- Monthly Income: ZMW {float(client.monthly_income):,.2f}
 - Credit Score: {client.credit_score}
 - Loyalty Tier: {client.tier}
 - Completed Loans: {client.completed_loans}
 - KYC Verified: {client.kyc_verified}
 
 **Calculations:**
-- Monthly Payment: ${float(loan.monthly_payment):,.2f}
-- Total Repayable: ${float(loan.total_repayable):,.2f}
+- Monthly Payment: ZMW {float(loan.monthly_payment):,.2f}
+- Total Repayable: ZMW {float(loan.total_repayable):,.2f}
 - Debt-to-Income Ratio: {(float(loan.monthly_payment) / float(client.monthly_income) * 100) if float(client.monthly_income) > 0 else 'N/A'}%
 
 Please provide:
