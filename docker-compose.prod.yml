@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
 
   # ── PostgreSQL Database ────────────────────────────────────────────────────
@@ -26,6 +24,7 @@ services:
              gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120"
     volumes:
       - media_files:/app/media
+      - ./backend/.env.production:/app/.env.production:ro
     env_file:
       - ./backend/.env.production
     depends_on:
@@ -42,6 +41,7 @@ services:
              gunicorn web_project.wsgi:application --bind 0.0.0.0:8001 --workers 2 --timeout 120"
     volumes:
       - website_static:/website_static
+      - ./website/.env.production:/app/.env.production:ro
     env_file:
       - ./website/.env.production
     depends_on:
