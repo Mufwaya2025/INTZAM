@@ -15,6 +15,21 @@ from apps.core.models import LoanProduct, SystemLog
 from apps.authentication.permission_utils import user_has_permission
 
 
+def _loan_queryset_for_user(user):
+    qs = Loan.objects.select_related('client', 'product')
+    if getattr(user, 'role', None) == 'CLIENT':
+        return qs.filter(client__user=user)
+    return qs
+
+
+def _get_accessible_loan(user, pk, **filters):
+    return _loan_queryset_for_user(user).get(pk=pk, **filters)
+
+
+def _user_can_operate_on_own_loan(user, loan):
+    return getattr(user, 'role', None) == 'CLIENT' and loan.client.user_id == user.id
+
+
 class LoanListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -72,9 +87,12 @@ class ApproveLoanView(APIView):
         if not user_has_permission(request.user, 'approve_loans'):
             return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
         try:
-            loan = Loan.objects.get(pk=pk)
+            loan = _get_accessible_loan(request.user, pk)
         except Loan.DoesNotExist:
             return Response({'error': 'Loan not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if loan.status not in [LoanStatus.PENDING_APPROVAL, LoanStatus.PENDING_INFO]:
+            return Response({'error': 'Only pending loans can be approved'}, status=status.HTTP_400_BAD_REQUEST)
 
         loan.status = LoanStatus.APPROVED
         loan.approved_by = request.user.get_full_name() or request.user.username
@@ -101,9 +119,12 @@ class RejectLoanView(APIView):
         if not user_has_permission(request.user, 'approve_loans'):
             return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
         try:
-            loan = Loan.objects.get(pk=pk)
+            loan = _get_accessible_loan(request.user, pk)
         except Loan.DoesNotExist:
             return Response({'error': 'Loan not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if loan.status not in [LoanStatus.PENDING_APPROVAL, LoanStatus.PENDING_INFO]:
+            return Response({'error': 'Only pending loans can be rejected'}, status=status.HTTP_400_BAD_REQUEST)
 
         loan.status = LoanStatus.REJECTED
         loan.rejection_reason = request.data.get('reason', '')
@@ -207,13 +228,26 @@ class RepaymentView(APIView):
 
     def post(self, request, pk):
         try:
-            loan = Loan.objects.get(pk=pk)
+            loan = _get_accessible_loan(request.user, pk)
         except Loan.DoesNotExist:
             return Response({'error': 'Loan not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        amount = float(request.data.get('amount', 0))
+        if not _user_can_operate_on_own_loan(request.user, loan) and not user_has_permission(request.user, 'post_repayments'):
+            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+
+        if loan.status not in [LoanStatus.ACTIVE, LoanStatus.OVERDUE]:
+            return Response({'error': 'Repayments are only allowed on active or overdue loans'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            amount = float(request.data.get('amount', 0))
+        except (TypeError, ValueError):
+            return Response({'error': 'Invalid amount'}, status=status.HTTP_400_BAD_REQUEST)
         if amount <= 0:
             return Response({'error': 'Invalid amount'}, status=status.HTTP_400_BAD_REQUEST)
+
+        outstanding = float(loan.total_repayable) - float(loan.repaid_amount)
+        if amount > outstanding:
+            return Response({'error': f'Amount exceeds outstanding balance ({outstanding:.2f})'}, status=status.HTTP_400_BAD_REQUEST)
 
         loan.repaid_amount = float(loan.repaid_amount) + amount
         if float(loan.repaid_amount) >= float(loan.total_repayable):
@@ -257,7 +291,7 @@ class PayoffQuoteView(APIView):
 
     def get(self, request, pk):
         try:
-            loan = Loan.objects.get(pk=pk)
+            loan = _get_accessible_loan(request.user, pk)
         except Loan.DoesNotExist:
             return Response({'error': 'Loan not found'}, status=status.HTTP_404_NOT_FOUND)
         quote = calculate_payoff_quote(loan)
@@ -268,12 +302,24 @@ class SettleLoanView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk):
+        if not user_has_permission(request.user, 'settle_loans'):
+            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
         try:
-            loan = Loan.objects.get(pk=pk)
+            loan = _get_accessible_loan(request.user, pk)
         except Loan.DoesNotExist:
             return Response({'error': 'Loan not found'}, status=status.HTTP_404_NOT_FOUND)
 
+        if loan.status not in [LoanStatus.ACTIVE, LoanStatus.OVERDUE]:
+            return Response({'error': 'Only active or overdue loans can be settled'}, status=status.HTTP_400_BAD_REQUEST)
+
         quote = calculate_payoff_quote(loan)
+        try:
+            settlement_amount = float(request.data.get('amount', 0))
+        except (TypeError, ValueError):
+            return Response({'error': 'Invalid settlement amount'}, status=status.HTTP_400_BAD_REQUEST)
+        if settlement_amount < float(quote['total_payoff_amount']):
+            return Response({'error': 'Settlement amount must cover the payoff quote'}, status=status.HTTP_400_BAD_REQUEST)
+
         loan.repaid_amount = loan.total_repayable
         loan.status = LoanStatus.CLOSED
         loan.save()
@@ -304,7 +350,7 @@ class RolloverEligibilityView(APIView):
 
     def get(self, request, pk):
         try:
-            loan = Loan.objects.get(pk=pk)
+            loan = _get_accessible_loan(request.user, pk)
         except Loan.DoesNotExist:
             return Response({'error': 'Loan not found'}, status=status.HTTP_404_NOT_FOUND)
         eligibility = check_rollover_eligibility(loan)
@@ -316,15 +362,23 @@ class RolloverView(APIView):
 
     def post(self, request, pk):
         try:
-            loan = Loan.objects.get(pk=pk)
+            loan = _get_accessible_loan(request.user, pk)
         except Loan.DoesNotExist:
             return Response({'error': 'Loan not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if not _user_can_operate_on_own_loan(request.user, loan) and not user_has_permission(request.user, 'rollover_loans'):
+            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
 
         eligibility = check_rollover_eligibility(loan)
         if not eligibility['eligible']:
             return Response({'error': eligibility['reason']}, status=status.HTTP_400_BAD_REQUEST)
 
-        extension_days = request.data.get('extension_days', loan.product.rollover_extension_days)
+        try:
+            extension_days = int(request.data.get('extension_days', loan.product.rollover_extension_days))
+        except (TypeError, ValueError):
+            return Response({'error': 'Invalid extension days'}, status=status.HTTP_400_BAD_REQUEST)
+        if extension_days <= 0:
+            return Response({'error': 'Invalid extension days'}, status=status.HTTP_400_BAD_REQUEST)
         outstanding = float(loan.total_repayable) - float(loan.repaid_amount)
         fee = calculate_rollover_fee(outstanding, float(loan.product.rollover_interest_rate), extension_days)
 

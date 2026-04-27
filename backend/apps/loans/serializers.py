@@ -91,7 +91,7 @@ class LoanCreateSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         request = self.context.get('request')
-        if not data.get('client') and request and hasattr(request.user, 'role') and request.user.role == 'CLIENT':
+        if request and hasattr(request.user, 'role') and request.user.role == 'CLIENT':
             data['client'] = sync_client_profile_for_user(request.user)
             
         if not data.get('client'):

@@ -429,7 +429,13 @@ class KYCSubmissionListCreateView(generics.ListCreateAPIView):
 class KYCSubmissionDetailView(generics.RetrieveUpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = KYCSubmissionSerializer
-    queryset = KYCSubmission.objects.all()
+
+    def get_queryset(self):
+        if self.request.user.role == 'CLIENT':
+            return KYCSubmission.objects.filter(client__user=self.request.user)
+        if user_has_permission(self.request.user, 'review_kyc_submissions'):
+            return KYCSubmission.objects.all()
+        return KYCSubmission.objects.none()
 
     def perform_update(self, serializer):
         if not user_has_permission(self.request.user, 'review_kyc_submissions'):

@@ -76,7 +76,8 @@ export default function LoansPage({ userPermissions }: LoansPageProps) {
         if (!selectedLoan) return;
         setActionLoading(true);
         try {
-            await loansAPI.settle(selectedLoan.id);
+            const quote = payoffQuote || (await loansAPI.payoffQuote(selectedLoan.id)).data;
+            await loansAPI.settle(selectedLoan.id, Number(quote.total_payoff_amount));
             loadLoans();
             setSelectedLoan(null);
         } catch (e: any) {

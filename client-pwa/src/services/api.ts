@@ -81,7 +81,7 @@ export const loansAPI = {
     repay: (id: number, amount: number, notes?: string) =>
         api.post(`/loans/${id}/repay/`, { amount, notes }),
     payoffQuote: (id: number) => api.get(`/loans/${id}/payoff-quote/`),
-    settle: (id: number) => api.post(`/loans/${id}/settle/`),
+    settle: (id: number, amount: number) => api.post(`/loans/${id}/settle/`, { amount }),
     rolloverEligibility: (id: number) => api.get(`/loans/${id}/rollover-eligibility/`),
     rollover: (id: number, extension_days: number) =>
         api.post(`/loans/${id}/rollover/`, { extension_days }),

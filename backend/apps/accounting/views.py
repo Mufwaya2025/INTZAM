@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.loans.models import Loan, LoanStatus, KonseTransaction, KonseTransactionType, KonseTransactionStatus
+from apps.authentication.permission_utils import user_has_permission
 from .models import LedgerAccount, JournalEntry, JournalLine
 from .momo_reconcile import reconcile_momo_payment
 from .odoo_client import get_odoo_client, OdooConnectionError
@@ -54,19 +55,46 @@ class JournalEntryWriteSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         lines_data = validated_data.pop('lines')
+        request = self.context.get('request')
+        posted_by = validated_data['posted_by']
+        if request and request.user.is_authenticated:
+            posted_by = request.user.get_full_name() or request.user.username
         return post_journal_entry(
             reference_id=validated_data['reference_id'],
             description=validated_data['description'],
-            posted_by=validated_data['posted_by'],
+            posted_by=posted_by,
             entry_date=validated_data.get('date'),
             lines=lines_data,
+        )
+
+
+class CanUseAccounting(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return (
+            request.user
+            and request.user.is_authenticated
+            and (
+                user_has_permission(request.user, 'accounting')
+                or user_has_permission(request.user, 'disbursements')
+            )
+        )
+
+
+class CanWriteAccounting(CanUseAccounting):
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return super().has_permission(request, view)
+        return (
+            request.user
+            and request.user.is_authenticated
+            and user_has_permission(request.user, 'accounting')
         )
 
 
 # Views
 class LedgerAccountListCreateView(generics.ListCreateAPIView):
     serializer_class = LedgerAccountSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [CanWriteAccounting]
 
     def get_queryset(self):
         ensure_opening_bank_balance()
@@ -75,12 +103,12 @@ class LedgerAccountListCreateView(generics.ListCreateAPIView):
 
 class LedgerAccountDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = LedgerAccountSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [CanWriteAccounting]
     queryset = LedgerAccount.objects.all()
 
 
 class JournalEntryListCreateView(generics.ListCreateAPIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [CanWriteAccounting]
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -94,7 +122,7 @@ class JournalEntryListCreateView(generics.ListCreateAPIView):
 
 class JournalEntryDetailView(generics.RetrieveAPIView):
     serializer_class = JournalEntrySerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [CanUseAccounting]
     queryset = JournalEntry.objects.prefetch_related('lines__account')
 
 
@@ -113,7 +141,7 @@ class OdooMonthlyReportView(APIView):
       - PAR ratio (Portfolio at Risk > 30 days) from LMS DB
       - Raw SQL query included for direct PostgreSQL use
     """
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [CanUseAccounting]
 
     def get(self, request):
         period_str = request.query_params.get('period', date.today().strftime('%Y-%m'))
@@ -366,7 +394,7 @@ class MoMoWebhookView(APIView):
 
 
 class TrialBalanceView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [CanUseAccounting]
 
     def get(self, request):
         ensure_opening_bank_balance()

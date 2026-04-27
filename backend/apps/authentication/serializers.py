@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
+from apps.authentication.permission_utils import user_has_permission
 
 User = get_user_model()
 
@@ -44,6 +45,20 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'role', 'phone', 'is_active', 'password', 'date_joined', 'last_login', 'custom_permissions']
         read_only_fields = ['id', 'date_joined', 'last_login']
+
+    def get_fields(self):
+        fields = super().get_fields()
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        can_manage_users = bool(
+            user and user.is_authenticated and user_has_permission(user, 'manage_users')
+        )
+
+        if not can_manage_users:
+            for field_name in ['role', 'is_active', 'custom_permissions']:
+                fields[field_name].read_only = True
+
+        return fields
 
     def create(self, validated_data):
         password = validated_data.pop('password', None)

@@ -94,6 +94,28 @@ export default function PaymentPage({ loanId, navigate }: PaymentPageProps) {
     }
 
     const outstanding = parseFloat(loan?.outstanding_balance || 0);
+    const canPay = loan?.status === 'ACTIVE' || loan?.status === 'OVERDUE';
+
+    if (!canPay) {
+        return (
+            <div>
+                <div className="page-header">
+                    <div className="page-header-back" onClick={() => navigate({ name: 'loan-detail', loanId })}>
+                        <ArrowLeft size={20} />
+                    </div>
+                    <span className="page-header-title">Make Payment</span>
+                </div>
+                <div className="empty-state">
+                    <AlertCircle size={34} color="var(--warning)" />
+                    <h3>Payment Not Available</h3>
+                    <p>This loan has not been disbursed yet. Payments can only be made once a loan is active.</p>
+                    <button className="btn btn-secondary" style={{ margin: '0 auto', width: 'auto' }} onClick={() => navigate({ name: 'loan-detail', loanId })}>
+                        Back to Loan
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div style={{ paddingBottom: 40 }}>

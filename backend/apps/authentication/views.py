@@ -10,6 +10,7 @@ from django.utils.dateparse import parse_date
 from .serializers import CustomTokenObtainPairSerializer, UserSerializer, ChangePasswordSerializer
 from apps.core.models import Client
 from apps.core.utils import ensure_pending_kyc_submission_for_client
+from apps.authentication.permission_utils import user_has_permission
 
 User = get_user_model()
 
@@ -59,14 +60,14 @@ class UserListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        if user.role == 'ADMIN':
+        if user_has_permission(user, 'manage_users'):
             return User.objects.all().order_by('-date_joined')
         return User.objects.filter(id=user.id)
 
-    def get_permissions(self):
-        if self.request.method == 'POST':
-            return [permissions.IsAuthenticated()]
-        return super().get_permissions()
+    def create(self, request, *args, **kwargs):
+        if not user_has_permission(request.user, 'manage_users'):
+            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+        return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         user = serializer.save()
@@ -83,9 +84,14 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        if user.role == 'ADMIN':
+        if user_has_permission(user, 'manage_users'):
             return User.objects.all()
         return User.objects.filter(id=user.id)
+
+    def destroy(self, request, *args, **kwargs):
+        if not user_has_permission(request.user, 'manage_users'):
+            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+        return super().destroy(request, *args, **kwargs)
 
     def perform_update(self, serializer):
         user = serializer.save()
