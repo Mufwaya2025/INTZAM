@@ -18,6 +18,13 @@ type CGRateTxn = {
     created_at: string;
 };
 
+type PaginatedResponse<T> = {
+    count?: number;
+    next?: string | null;
+    previous?: string | null;
+    results?: T[];
+};
+
 const statusClass: Record<string, string> = {
     COMPLETED: 'badge-success',
     PENDING: 'badge-warning',
@@ -29,6 +36,12 @@ const statusClass: Record<string, string> = {
 function money(value: number | string | null | undefined) {
     const num = Number(value || 0);
     return `ZMW ${Math.abs(num).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function listFromResponse<T>(data: T[] | PaginatedResponse<T>): T[] {
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.results)) return data.results;
+    return [];
 }
 
 export default function CGRatePage() {
@@ -47,7 +60,7 @@ export default function CGRatePage() {
                 cgrateAPI.stats(),
                 cgrateAPI.balance(),
             ]);
-            if (txRes.status === 'fulfilled') setTransactions(txRes.value.data);
+            if (txRes.status === 'fulfilled') setTransactions(listFromResponse<CGRateTxn>(txRes.value.data));
             else throw txRes.reason;
             if (statsRes.status === 'fulfilled') setStats(statsRes.value.data);
             if (balanceRes.status === 'fulfilled') setBalance(balanceRes.value.data.balance);
