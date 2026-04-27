@@ -7,6 +7,7 @@ from django.utils import timezone
 from datetime import date, timedelta
 from apps.loans.models import Loan, Transaction, LoanStatus, TransactionType
 from apps.core.models import Client, LoanProduct
+from apps.core.utils import get_client_qualified_record
 
 
 def loan_outstanding(loan):
@@ -24,6 +25,36 @@ def loan_interest_ratio(loan):
 
 def loan_interest_component(loan, amount):
     return round(float(amount) * loan_interest_ratio(loan), 2)
+
+
+def proper_name(value):
+    return ' '.join(str(value or '').split()).title()
+
+
+def client_display_name(client):
+    if not client:
+        return ''
+
+    user = getattr(client, 'user', None)
+    user_name = proper_name(
+        ' '.join(
+            part for part in [
+                getattr(user, 'first_name', ''),
+                getattr(user, 'last_name', ''),
+            ]
+            if part
+        )
+    ) if user else ''
+    if user_name:
+        return user_name
+
+    qualified_record = get_client_qualified_record(client)
+    if qualified_record:
+        qualified_name = proper_name(f'{qualified_record.first_name} {qualified_record.last_name}')
+        if qualified_name:
+            return qualified_name
+
+    return proper_name(client.name)
 
 
 class ReportView(APIView):
@@ -105,7 +136,7 @@ class ReportView(APIView):
             data.append({
                 'no':                    i,
                 'loan_number':           loan.loan_number,
-                'client_name':           loan.client.name,
+                'client_name':           client_display_name(loan.client),
                 'client_nrc':            loan.client.nrc_number or '',
                 'client_phone':          loan.client.phone,
                 'gender':                loan.client.gender or '',
@@ -344,7 +375,7 @@ class ReportView(APIView):
         overdue = Loan.objects.filter(status=LoanStatus.OVERDUE).select_related('client')
         data = [{
             'loan_number': l.loan_number,
-            'client': l.client.name,
+            'client': client_display_name(l.client),
             'phone': l.client.phone,
             'outstanding': loan_outstanding(l),
             'days_overdue': l.days_overdue,
@@ -400,7 +431,7 @@ class ReportView(APIView):
 
             rows.append({
                 'loan_number': l.loan_number,
-                'client_name': l.client.name,
+                'client_name': client_display_name(l.client),
                 'client_phone': l.client.phone,
                 'product': l.product.name,
                 'installment_no': installment_no,
@@ -467,7 +498,7 @@ class ReportView(APIView):
         loans = Loan.objects.all().select_related('client', 'product')
         data = [{
             'loan_number': l.loan_number,
-            'client': l.client.name,
+            'client': client_display_name(l.client),
             'product': l.product.name,
             'amount': float(l.amount),
             'total_repayable': float(l.total_repayable),
@@ -614,7 +645,7 @@ class ReportView(APIView):
         loans = Loan.objects.filter(status=LoanStatus.WRITTEN_OFF).select_related('client', 'product')
         data = [{
             'loan_number': l.loan_number,
-            'client': l.client.name,
+            'client': client_display_name(l.client),
             'product': l.product.name,
             'amount': float(l.amount),
             'outstanding': loan_outstanding(l),

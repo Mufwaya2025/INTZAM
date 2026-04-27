@@ -4,7 +4,7 @@ from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from apps.authentication.models import User
-from apps.core.models import Client, InterestType, LoanProduct
+from apps.core.models import Client, InterestType, LoanProduct, QualifiedBase
 from apps.loans.models import Loan, LoanStatus, Transaction, TransactionType
 
 
@@ -122,3 +122,20 @@ class ReportsRegressionTests(APITestCase):
         self.assertEqual(response.status_code, 200, response.data)
         self.assertEqual(response.data['income']['interest_income'], 100)
         self.assertEqual(response.data['income']['repayment_principal_component'], 400)
+
+    def test_disbursement_register_uses_proper_client_name(self):
+        self.client_profile.name = 'nazimvirani'
+        self.client_profile.save(update_fields=['name'])
+        QualifiedBase.objects.create(
+            first_name='nazim',
+            last_name='virani',
+            phone_number=self.client_profile.phone,
+            nrc_number=self.client_profile.nrc_number,
+            amount_qualified_for=3000,
+        )
+        self._loan()
+
+        response = self.client.get('/api/v1/reports/disbursement-register/')
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data['data'][0]['client_name'], 'Nazim Virani')
