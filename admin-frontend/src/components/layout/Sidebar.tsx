@@ -12,7 +12,7 @@ const NAV_ITEMS = [
         section: 'Overview',
         items: [
             { id: 'dashboard',       label: 'Dashboard',          icon: '📊' },
-        ]
+        ],
     },
     {
         section: 'Operations',
@@ -25,15 +25,16 @@ const NAV_ITEMS = [
             { id: 'collections',     label: 'Collections',        icon: '📞' },
             { id: 'kyc_builder',     label: 'KYC Form Builder',   icon: '📝' },
             { id: 'kyc_submissions', label: 'Client KYC Reviews', icon: '🔍' },
-        ]
+        ],
     },
     {
         section: 'Finance',
         items: [
             { id: 'disbursements', label: 'Disbursements', icon: '💸' },
+            { id: 'cgrate',        label: 'CGRate',        icon: '📲' },
             { id: 'accounting',    label: 'Accounting',    icon: '📒' },
             { id: 'reports',       label: 'Reports',       icon: '📈' },
-        ]
+        ],
     },
     {
         section: 'Admin',
@@ -41,7 +42,7 @@ const NAV_ITEMS = [
             { id: 'users',      label: 'Users',           icon: '👤' },
             { id: 'audit_logs', label: 'Audit Logs',      icon: '📋' },
             { id: 'settings',   label: 'System Settings', icon: '⚙️' },
-        ]
+        ],
     },
 ];
 

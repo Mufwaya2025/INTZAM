@@ -110,6 +110,15 @@ export const loansAPI = {
     calculate: (data: any) => api.post('/calculator/', data),
 };
 
+export const cgrateAPI = {
+    transactions: (params?: any) => api.get('/cgrate/transactions/', { params }),
+    balance: () => api.get('/cgrate/balance/'),
+    stats: () => api.get('/cgrate/stats/'),
+    collect: (loanId: number, amount: number, notes?: string) =>
+        api.post(`/loans/${loanId}/cgrate-collect/`, { amount, notes }),
+    disburse: (loanId: number) => api.post(`/loans/${loanId}/cgrate-disburse/`),
+};
+
 // Accounting API
 export const accountingAPI = {
     accounts: () => api.get('/accounting/accounts/'),

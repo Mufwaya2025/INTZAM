@@ -162,3 +162,11 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@intzam.com')
 FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5174')
+
+# CGRate SOAP payment gateway
+CGRATE_ENABLED = config('CGRATE_ENABLED', default=False, cast=bool)
+CGRATE_AUTO_DISBURSE = config('CGRATE_AUTO_DISBURSE', default=False, cast=bool)
+CGRATE_ENDPOINT = config('CGRATE_ENDPOINT', default='https://543.cgrate.co.zm/Konik/KonikWs')
+CGRATE_USERNAME = config('CGRATE_USERNAME', default='')
+CGRATE_PASSWORD = config('CGRATE_PASSWORD', default='')
+CGRATE_TIMEOUT = config('CGRATE_TIMEOUT', default=30, cast=int)

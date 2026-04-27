@@ -16,13 +16,14 @@ import AuditLogsPage from '../../pages/AuditLogsPage';
 import KYCBuilderPage from '../../pages/KYCBuilderPage';
 import KYCSubmissionsPage from '../../pages/KYCSubmissionsPage';
 import SettingsPage from '../../pages/SettingsPage';
+import CGRatePage from '../../pages/CGRatePage';
 
 interface AdminLayoutProps {
     user: any;
     onLogout: () => void;
 }
 
-export type Module = 'dashboard' | 'clients' | 'qualified_base' | 'products' | 'loans' | 'underwriting' | 'collections' | 'disbursements' | 'accounting' | 'reports' | 'users' | 'audit_logs' | 'kyc_builder' | 'kyc_submissions' | 'settings';
+export type Module = 'dashboard' | 'clients' | 'qualified_base' | 'products' | 'loans' | 'underwriting' | 'collections' | 'disbursements' | 'cgrate' | 'accounting' | 'reports' | 'users' | 'audit_logs' | 'kyc_builder' | 'kyc_submissions' | 'settings';
 
 export default function AdminLayout({ user, onLogout }: AdminLayoutProps) {
     const [activeModule, setActiveModule] = useState<Module>('dashboard');
@@ -40,6 +41,7 @@ export default function AdminLayout({ user, onLogout }: AdminLayoutProps) {
             case 'underwriting': return <UnderwritingPage userPermissions={perms} />;
             case 'collections': return <CollectionsPage userRole={user.role} />;
             case 'disbursements': return <AccountingPage initialTab="disbursements" />;
+            case 'cgrate': return <CGRatePage />;
             case 'accounting': return <AccountingPage />;
             case 'reports': return <ReportsPage userPermissions={perms} />;
             case 'users': return <UsersPage />;
@@ -60,6 +62,7 @@ export default function AdminLayout({ user, onLogout }: AdminLayoutProps) {
         underwriting: 'Underwriting',
         collections: 'Collections',
         disbursements: 'Disbursements Queue',
+        cgrate: 'CGRate Transactions',
         accounting: 'Accounting',
         reports: 'Reports Center',
         users: 'User Management',

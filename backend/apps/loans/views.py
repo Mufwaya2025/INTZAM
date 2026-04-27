@@ -1,11 +1,31 @@
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.conf import settings
 from django.db import transaction
+from django.db.models import Sum
 from django.utils import timezone
 from datetime import date, timedelta
-from .models import Loan, LoanDocument, Transaction, CollectionActivity, LoanStatus, TransactionType
-from .serializers import LoanSerializer, LoanCreateSerializer, LoanDocumentSerializer, TransactionSerializer, CollectionActivitySerializer
+from .models import (
+    CGRateTransaction,
+    CGRateTransactionStatus,
+    CGRateTransactionType,
+    Loan,
+    LoanDocument,
+    Transaction,
+    CollectionActivity,
+    LoanStatus,
+    TransactionType,
+)
+from .serializers import (
+    CGRateTransactionSerializer,
+    LoanSerializer,
+    LoanCreateSerializer,
+    LoanDocumentSerializer,
+    TransactionSerializer,
+    CollectionActivitySerializer,
+)
+from .cgrate_service import CGRatePaymentService
 from .services import calculate_loan_terms, calculate_payoff_quote, check_rollover_eligibility, calculate_rollover_fee
 from apps.accounting.services import ensure_opening_bank_balance, post_loan_disbursement
 from apps.accounting.on_loan_approved import on_loan_disbursed
@@ -181,6 +201,16 @@ class DisburseLoanView(APIView):
 
         # ── Odoo integration (non-blocking — errors are logged, not raised) ──
         on_loan_disbursed(loan)
+
+        if settings.CGRATE_AUTO_DISBURSE:
+            try:
+                CGRatePaymentService().process_disbursement(loan)
+            except Exception as exc:
+                SystemLog.objects.create(
+                    action="CGRate Disbursement Failed",
+                    details=f"Loan {loan.loan_number} CGRate disbursement could not be initiated: {exc}",
+                    performed_by=request.user
+                )
 
         return Response(LoanSerializer(loan).data)
 
@@ -637,3 +667,124 @@ class LoanCalculatorView(APIView):
             processing_fee=processing_fee,
         )
         return Response(result)
+
+
+class CGRateTransactionListView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = CGRateTransactionSerializer
+
+    def list(self, request, *args, **kwargs):
+        if not user_has_permission(request.user, 'cgrate'):
+            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+        return super().list(request, *args, **kwargs)
+
+    def get_queryset(self):
+        qs = CGRateTransaction.objects.select_related('loan', 'loan__client').all()
+        status_filter = self.request.query_params.get('status')
+        if status_filter:
+            qs = qs.filter(status=status_filter)
+        transaction_type = self.request.query_params.get('type')
+        if transaction_type:
+            qs = qs.filter(transaction_type=transaction_type)
+        return qs[:500]
+
+
+class CGRateBalanceView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        if not user_has_permission(request.user, 'cgrate'):
+            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            result = CGRatePaymentService().get_balance()
+        except Exception as exc:
+            return Response({'status': 503, 'message': str(exc), 'balance': None}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        return Response({'status': 200, 'message': 'Success', 'balance': result.get('balance')})
+
+
+class CGRateStatsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        if not user_has_permission(request.user, 'cgrate'):
+            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+        today = timezone.localdate()
+        completed_today = CGRateTransaction.objects.filter(
+            status=CGRateTransactionStatus.COMPLETED,
+            created_at__date=today,
+        )
+        paid = completed_today.filter(
+            transaction_type=CGRateTransactionType.DISBURSEMENT,
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        received = completed_today.filter(
+            transaction_type=CGRateTransactionType.COLLECTION,
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        return Response({
+            'total_paid_today': abs(float(paid)),
+            'total_received_today': float(received),
+            'paid_count': completed_today.filter(transaction_type=CGRateTransactionType.DISBURSEMENT).count(),
+            'received_count': completed_today.filter(transaction_type=CGRateTransactionType.COLLECTION).count(),
+        })
+
+
+class CGRateCollectionView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            loan = _get_accessible_loan(request.user, pk)
+        except Loan.DoesNotExist:
+            return Response({'error': 'Loan not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if not _user_can_operate_on_own_loan(request.user, loan) and not user_has_permission(request.user, 'post_repayments'):
+            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+        if loan.status not in [LoanStatus.ACTIVE, LoanStatus.OVERDUE]:
+            return Response({'error': 'CGRate collections are only allowed on active or overdue loans'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            amount = float(request.data.get('amount', 0))
+        except (TypeError, ValueError):
+            return Response({'error': 'Invalid amount'}, status=status.HTTP_400_BAD_REQUEST)
+        if amount <= 0:
+            return Response({'error': 'Invalid amount'}, status=status.HTTP_400_BAD_REQUEST)
+        outstanding = float(loan.total_repayable) - float(loan.repaid_amount)
+        if amount > outstanding:
+            return Response({'error': f'Amount exceeds outstanding balance ({outstanding:.2f})'}, status=status.HTTP_400_BAD_REQUEST)
+
+        txn = CGRatePaymentService().process_collection(
+            loan,
+            amount,
+            note=(request.data.get('notes') or '').strip(),
+        )
+        return Response(CGRateTransactionSerializer(txn).data, status=status.HTTP_201_CREATED)
+
+
+class CGRateDisbursementView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        if not user_has_permission(request.user, 'disburse_loans'):
+            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            loan = _get_accessible_loan(request.user, pk, status=LoanStatus.ACTIVE)
+        except Loan.DoesNotExist:
+            return Response({'error': 'Active loan not found'}, status=status.HTTP_404_NOT_FOUND)
+        existing = CGRateTransaction.objects.filter(
+            loan=loan,
+            transaction_type=CGRateTransactionType.DISBURSEMENT,
+            status__in=[
+                CGRateTransactionStatus.PENDING,
+                CGRateTransactionStatus.PROCESSING,
+                CGRateTransactionStatus.COMPLETED,
+            ],
+        ).first()
+        if existing:
+            return Response(
+                {
+                    'error': 'CGRate disbursement already exists for this loan',
+                    'transaction': CGRateTransactionSerializer(existing).data,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        txn = CGRatePaymentService().process_disbursement(loan)
+        return Response(CGRateTransactionSerializer(txn).data, status=status.HTTP_201_CREATED)

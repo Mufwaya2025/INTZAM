@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from rest_framework import serializers
-from .models import Loan, LoanDocument, Transaction, CollectionActivity
+from .models import CGRateTransaction, Loan, LoanDocument, Transaction, CollectionActivity
 from apps.core.serializers import ClientSerializer, KYCSubmissionSerializer, LoanProductSerializer
 from apps.core.models import Client, KYCSection
 from apps.core.utils import get_client_max_borrow_amount, get_client_qualified_record, sync_client_profile_for_user
@@ -39,6 +39,21 @@ class CollectionActivitySerializer(serializers.ModelSerializer):
         model = CollectionActivity
         fields = '__all__'
         read_only_fields = ['id', 'created_at']
+
+
+class CGRateTransactionSerializer(serializers.ModelSerializer):
+    loan_number = serializers.CharField(source='loan.loan_number', read_only=True)
+    client_name = serializers.CharField(source='loan.client.name', read_only=True)
+
+    class Meta:
+        model = CGRateTransaction
+        fields = [
+            'id', 'loan', 'loan_number', 'client_name', 'transaction_type',
+            'name', 'email', 'phone_number', 'amount', 'reference', 'currency',
+            'service', 'checklink', 'status', 'external_ref',
+            'response_message', 'created_at', 'updated_at', 'processed_at',
+        ]
+        read_only_fields = fields
 
 
 class LoanSerializer(serializers.ModelSerializer):

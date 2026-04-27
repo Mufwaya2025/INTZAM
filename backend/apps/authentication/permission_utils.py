@@ -13,7 +13,7 @@ ROLE_DEFAULTS: dict[str, list[str]] = {
         # Modules
         'dashboard', 'clients', 'qualified_base', 'products', 'loans',
         'underwriting', 'collections', 'kyc_builder', 'kyc_submissions',
-        'disbursements', 'accounting', 'reports', 'users', 'audit_logs',
+        'disbursements', 'cgrate', 'accounting', 'reports', 'users', 'audit_logs',
         # Actions
         'approve_loans', 'disburse_loans', 'return_to_underwriter',
         'write_off_loans', 'record_recovery', 'manage_loan_products',
@@ -43,7 +43,7 @@ ROLE_DEFAULTS: dict[str, list[str]] = {
         'report:ptp-performance',
     ],
     'ACCOUNTANT': [
-        'dashboard', 'loans', 'disbursements', 'accounting', 'reports',
+        'dashboard', 'loans', 'disbursements', 'cgrate', 'accounting', 'reports',
         'disburse_loans', 'return_to_underwriter', 'record_recovery',
         'post_repayments',
         'report:disbursement-register', 'report:active-loan-portfolio',

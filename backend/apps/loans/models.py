@@ -311,3 +311,76 @@ class KonseTransaction(models.Model):
             f'{self.transaction_reference} — '
             f'ZMW {self.amount} [{self.status}]'
         )
+
+
+class CGRateTransactionType(models.TextChoices):
+    DISBURSEMENT = 'DISBURSEMENT', 'Disbursement'
+    COLLECTION = 'COLLECTION', 'Collection'
+
+
+class CGRateTransactionStatus(models.TextChoices):
+    PENDING = 'PENDING', 'Pending'
+    PROCESSING = 'PROCESSING', 'Processing'
+    COMPLETED = 'COMPLETED', 'Completed'
+    FAILED = 'FAILED', 'Failed'
+    ERROR = 'ERROR', 'Error'
+
+
+class CGRateServiceProvider(models.TextChoices):
+    MTN = 'MTN', 'MTN'
+    AIRTEL = 'Airtel', 'Airtel'
+
+
+class CGRateTransaction(models.Model):
+    """
+    Tracks payment gateway transactions sent to CGRate.
+
+    Disbursements are stored as negative amounts and collections as positive
+    amounts so daily paid/received totals can be calculated directly.
+    """
+
+    loan = ForeignKey(
+        Loan,
+        on_delete=PROTECT,
+        related_name='cgrate_transactions',
+        null=True,
+        blank=True,
+    )
+    transaction_type = CharField(
+        max_length=20,
+        choices=CGRateTransactionType.choices,
+        db_index=True,
+    )
+    name = CharField(max_length=200, blank=True)
+    email = CharField(max_length=255, blank=True)
+    phone_number = CharField(max_length=20)
+    amount = DecimalField(max_digits=15, decimal_places=2)
+    reference = CharField(max_length=100, unique=True)
+    currency = CharField(max_length=3, default='ZMW')
+    service = CharField(max_length=20, choices=CGRateServiceProvider.choices)
+    checklink = CharField(max_length=64, default=uuid.uuid4, unique=True)
+    status = CharField(
+        max_length=20,
+        choices=CGRateTransactionStatus.choices,
+        default=CGRateTransactionStatus.PENDING,
+        db_index=True,
+    )
+    external_ref = CharField(max_length=100, blank=True)
+    response_message = models.TextField(blank=True)
+    raw_request = JSONField(null=True, blank=True)
+    raw_response = JSONField(null=True, blank=True)
+    processed_at = DateTimeField(null=True, blank=True)
+    created_at = DateTimeField(auto_now_add=True)
+    updated_at = DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            Index(fields=['loan']),
+            Index(fields=['reference']),
+            Index(fields=['status']),
+            Index(fields=['transaction_type']),
+        ]
+
+    def __str__(self):
+        return f'{self.transaction_type} {self.reference} - ZMW {self.amount} [{self.status}]'

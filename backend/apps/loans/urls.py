@@ -6,6 +6,8 @@ from .views import (
     RolloverEligibilityView, RolloverView, WriteOffLoanView, RecoveryView,
     RequestClientInfoView, ProvideClientInfoView,
     CollectionActivityListCreateView, LoanCalculatorView,
+    CGRateBalanceView, CGRateCollectionView, CGRateDisbursementView,
+    CGRateStatsView, CGRateTransactionListView,
 )
 
 urlpatterns = [
@@ -16,6 +18,8 @@ urlpatterns = [
     path('loans/<int:pk>/disburse/', DisburseLoanView.as_view(), name='loan-disburse'),
     path('loans/<int:pk>/return-to-underwriter/', ReturnToUnderwriterView.as_view(), name='loan-return-to-underwriter'),
     path('loans/<int:pk>/repay/', RepaymentView.as_view(), name='loan-repay'),
+    path('loans/<int:pk>/cgrate-collect/', CGRateCollectionView.as_view(), name='loan-cgrate-collect'),
+    path('loans/<int:pk>/cgrate-disburse/', CGRateDisbursementView.as_view(), name='loan-cgrate-disburse'),
     path('loans/<int:pk>/payoff-quote/', PayoffQuoteView.as_view(), name='loan-payoff-quote'),
     path('loans/<int:pk>/settle/', SettleLoanView.as_view(), name='loan-settle'),
     path('loans/<int:pk>/rollover-eligibility/', RolloverEligibilityView.as_view(), name='loan-rollover-eligibility'),
@@ -27,4 +31,7 @@ urlpatterns = [
     path('loans/<int:loan_pk>/activities/', CollectionActivityListCreateView.as_view(), name='loan-activities'),
     path('activities/', CollectionActivityListCreateView.as_view(), name='activity-list'),
     path('calculator/', LoanCalculatorView.as_view(), name='loan-calculator'),
+    path('cgrate/transactions/', CGRateTransactionListView.as_view(), name='cgrate-transactions'),
+    path('cgrate/balance/', CGRateBalanceView.as_view(), name='cgrate-balance'),
+    path('cgrate/stats/', CGRateStatsView.as_view(), name='cgrate-stats'),
 ]
