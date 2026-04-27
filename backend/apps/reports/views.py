@@ -5,6 +5,7 @@ from apps.authentication.permission_utils import user_has_permission
 from django.db.models import Sum, Count, Q, Avg
 from django.utils import timezone
 from datetime import date, timedelta
+from html import unescape
 from apps.loans.models import Loan, Transaction, LoanStatus, TransactionType
 from apps.core.models import Client, LoanProduct
 from apps.core.utils import get_client_qualified_record
@@ -28,7 +29,9 @@ def loan_interest_component(loan, amount):
 
 
 def proper_name(value):
-    return ' '.join(str(value or '').split()).title()
+    normalized = str(value or '').replace('&nbps;', ' ').replace('&nbsp;', ' ')
+    normalized = unescape(normalized).replace('\xa0', ' ')
+    return ' '.join(normalized.split()).title()
 
 
 def client_display_name(client):

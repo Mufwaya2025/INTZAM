@@ -139,3 +139,13 @@ class ReportsRegressionTests(APITestCase):
 
         self.assertEqual(response.status_code, 200, response.data)
         self.assertEqual(response.data['data'][0]['client_name'], 'Nazim Virani')
+
+    def test_disbursement_register_cleans_html_space_artifacts_in_names(self):
+        self.client_profile.name = 'musanide&nbps;lubunda'
+        self.client_profile.save(update_fields=['name'])
+        self._loan()
+
+        response = self.client.get('/api/v1/reports/disbursement-register/')
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data['data'][0]['client_name'], 'Musanide Lubunda')
