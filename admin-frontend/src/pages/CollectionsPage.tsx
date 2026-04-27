@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { loansAPI } from '../services/api';
+import { formatMoney } from '../utils/format';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface CollectionsPageProps {
@@ -88,7 +89,7 @@ export default function CollectionsPage({ userRole: _userRole }: CollectionsPage
                     { label: '31-60 Days', count: loans.filter(l => (l.days_overdue || 0) > 30 && (l.days_overdue || 0) <= 60).length, color: '#f97316' },
                     { label: '61-90 Days', count: loans.filter(l => (l.days_overdue || 0) > 60 && (l.days_overdue || 0) <= 90).length, color: 'var(--error)' },
                     { label: '90+ Days', count: loans.filter(l => (l.days_overdue || 0) > 90).length, color: '#7f1d1d' },
-                    { label: 'Total PAR', count: `ZMW ${(totalPAR / 1000).toFixed(0)}K`, color: 'var(--primary-600)' },
+                    { label: 'Total PAR', count: formatMoney(totalPAR), color: 'var(--primary-600)' },
                 ].map(b => (
                     <div key={b.label} className="stat-card">
                         <div className="stat-value" style={{ color: b.color }}>{b.count}</div>
@@ -142,7 +143,7 @@ export default function CollectionsPage({ userRole: _userRole }: CollectionsPage
                                                 <div style={{ fontWeight: 600 }}>{loan.client_name}</div>
                                             </td>
                                             <td style={{ color: 'var(--error)', fontWeight: 700 }}>
-                                                ZMW {(Number(loan.total_repayable) - Number(loan.repaid_amount)).toLocaleString()}
+                                                {formatMoney(Number(loan.total_repayable) - Number(loan.repaid_amount))}
                                             </td>
                                             <td>
                                                 <span style={{
@@ -180,7 +181,7 @@ export default function CollectionsPage({ userRole: _userRole }: CollectionsPage
                             <div style={{ background: 'var(--error-light)', borderRadius: 10, padding: 12, marginBottom: 16, fontSize: 13 }}>
                                 <div style={{ fontWeight: 700, color: '#991b1b', marginBottom: 4 }}>{selectedLoan.client_name}</div>
                                 <div style={{ color: '#991b1b' }}>
-                                    Outstanding: <strong>ZMW {(Number(selectedLoan.total_repayable) - Number(selectedLoan.repaid_amount)).toLocaleString()}</strong>
+                                    Outstanding: <strong>{formatMoney(Number(selectedLoan.total_repayable) - Number(selectedLoan.repaid_amount))}</strong>
                                     {' | '}{selectedLoan.days_overdue || 0} days overdue
                                 </div>
                             </div>

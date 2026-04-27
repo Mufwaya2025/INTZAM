@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { reportsAPI } from '../services/api';
+import { formatMoney } from '../utils/format';
 
 interface ReportsPageProps {
     userPermissions: string[];
@@ -240,7 +241,7 @@ function DisbursementRegisterTable({ data: report }: { data: any }) {
     const renderCell = (col: typeof DR_COLS[0], val: any) => {
         if (val === null || val === undefined || val === '') return <span style={{ color: '#ccc' }}>—</span>;
         switch (col.fmt) {
-            case 'currency': return `ZMW ${Number(val).toLocaleString()}`;
+            case 'currency': return formatMoney(val);
             case 'pct':      return val != null ? `${val}%` : '—';
             case 'status':   return <span style={{ fontWeight: 700, color: STATUS_COLORS[val] || '#333', fontSize: 11 }}>{val}</span>;
             case 'class':    return <span style={{ fontWeight: 700, color: CLASS_COLORS[val] || '#333', fontSize: 11 }}>{val}</span>;
@@ -262,10 +263,10 @@ function DisbursementRegisterTable({ data: report }: { data: any }) {
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
                 {[
                     { label: 'Total Loans',      value: summary.total_loans?.toLocaleString() },
-                    { label: 'Total Disbursed',  value: `ZMW ${Number(summary.total_disbursed || 0).toLocaleString()}` },
-                    { label: 'Total Outstanding',value: `ZMW ${Number(summary.total_outstanding || 0).toLocaleString()}` },
+                    { label: 'Total Disbursed',  value: formatMoney(summary.total_disbursed) },
+                    { label: 'Total Outstanding',value: formatMoney(summary.total_outstanding) },
                     { label: 'PAR >30 Loans',    value: summary.par30_count, highlight: summary.par30_count > 0 },
-                    { label: 'PAR >30 Amount',   value: `ZMW ${Number(summary.par30_amount || 0).toLocaleString()}`, highlight: summary.par30_amount > 0 },
+                    { label: 'PAR >30 Amount',   value: formatMoney(summary.par30_amount), highlight: summary.par30_amount > 0 },
                     { label: 'PAR >30 Ratio',    value: `${summary.par30_ratio}%`, highlight: summary.par30_ratio > 5 },
                 ].map(s => (
                     <div key={s.label} style={{
@@ -344,7 +345,7 @@ function DisbursementRegisterTable({ data: report }: { data: any }) {
                                     if (col.key === 'client_name') return <td key={col.key} style={{ padding: '6px 10px', border: '1px solid #d0d0d0' }}>TOTAL ({rows.length})</td>;
                                     if (numCols.includes(col.key)) {
                                         const sum = rows.reduce((acc: number, r: any) => acc + (r[col.key] || 0), 0);
-                                        return <td key={col.key} style={{ padding: '6px 10px', border: '1px solid #d0d0d0', textAlign: 'right' }}>ZMW {Math.round(sum).toLocaleString()}</td>;
+                                        return <td key={col.key} style={{ padding: '6px 10px', border: '1px solid #d0d0d0', textAlign: 'right' }}>{formatMoney(sum)}</td>;
                                     }
                                     return <td key={col.key} style={{ padding: '6px 10px', border: '1px solid #d0d0d0' }}></td>;
                                 })}
@@ -503,7 +504,7 @@ function ReportOutput({ data, reportId, ecWindowDays, onEcWindowChange, vaProduc
                 <div className="stat-grid" style={{ marginBottom: 20 }}>
                     {Object.entries(data.summary).map(([key, val]: any) => (
                         <div key={key} className="stat-card">
-                            <div className="stat-value">{typeof val === 'number' ? (val > 1000 ? `ZMW ${(val / 1000).toFixed(0)}K` : val.toLocaleString()) : val}</div>
+                            <div className="stat-value">{typeof val === 'number' ? formatMoney(val) : val}</div>
                             <div className="stat-label">{key.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}</div>
                         </div>
                     ))}
@@ -513,10 +514,10 @@ function ReportOutput({ data, reportId, ecWindowDays, onEcWindowChange, vaProduc
         if (data.income) {
             return (
                 <div className="stat-grid" style={{ marginBottom: 20 }}>
-                    <div className="stat-card"><div className="stat-value" style={{ color: 'var(--success)' }}>ZMW {data.income.interest_income?.toLocaleString()}</div><div className="stat-label">Interest Income</div></div>
-                    <div className="stat-card"><div className="stat-value" style={{ color: 'var(--warning)' }}>ZMW {data.income.penalty_income?.toLocaleString()}</div><div className="stat-label">Penalty Income</div></div>
-                    <div className="stat-card"><div className="stat-value" style={{ color: 'var(--primary-600)' }}>ZMW {data.income.total_income?.toLocaleString()}</div><div className="stat-label">Total Income</div></div>
-                    <div className="stat-card"><div className="stat-value" style={{ color: 'var(--error)' }}>ZMW {data.disbursements?.toLocaleString()}</div><div className="stat-label">Disbursements</div></div>
+                    <div className="stat-card"><div className="stat-value" style={{ color: 'var(--success)' }}>{formatMoney(data.income.interest_income)}</div><div className="stat-label">Interest Income</div></div>
+                    <div className="stat-card"><div className="stat-value" style={{ color: 'var(--warning)' }}>{formatMoney(data.income.penalty_income)}</div><div className="stat-label">Penalty Income</div></div>
+                    <div className="stat-card"><div className="stat-value" style={{ color: 'var(--primary-600)' }}>{formatMoney(data.income.total_income)}</div><div className="stat-label">Total Income</div></div>
+                    <div className="stat-card"><div className="stat-value" style={{ color: 'var(--error)' }}>{formatMoney(data.disbursements)}</div><div className="stat-label">Disbursements</div></div>
                 </div>
             );
         }
@@ -524,14 +525,14 @@ function ReportOutput({ data, reportId, ecWindowDays, onEcWindowChange, vaProduc
             return (
                 <div className="stat-grid" style={{ marginBottom: 20 }}>
                     <div className="stat-card"><div className="stat-value" style={{ color: data.par_ratio > 5 ? 'var(--error)' : 'var(--success)' }}>{data.par_ratio}%</div><div className="stat-label">PAR Ratio</div></div>
-                    <div className="stat-card"><div className="stat-value">ZMW {(data.par_amount / 1000).toFixed(0)}K</div><div className="stat-label">PAR Amount</div></div>
+                    <div className="stat-card"><div className="stat-value">{formatMoney(data.par_amount)}</div><div className="stat-label">PAR Amount</div></div>
                 </div>
             );
         }
         if (data.total_ecl !== undefined) {
             return (
                 <div className="stat-grid" style={{ marginBottom: 20 }}>
-                    <div className="stat-card"><div className="stat-value" style={{ color: 'var(--error)' }}>ZMW {data.total_ecl?.toLocaleString()}</div><div className="stat-label">Total ECL</div></div>
+                    <div className="stat-card"><div className="stat-value" style={{ color: 'var(--error)' }}>{formatMoney(data.total_ecl)}</div><div className="stat-label">Total ECL</div></div>
                 </div>
             );
         }
@@ -558,7 +559,7 @@ function ReportOutput({ data, reportId, ecWindowDays, onEcWindowChange, vaProduc
                                 {keys.map(k => (
                                     <td key={k}>
                                         {typeof row[k] === 'number' && k.includes('amount') || k.includes('total') || k.includes('outstanding') || k.includes('ecl') || k.includes('exposure')
-                                            ? `ZMW ${Number(row[k]).toLocaleString()}`
+                                            ? formatMoney(row[k])
                                             : typeof row[k] === 'boolean'
                                                 ? <span className={`badge ${row[k] ? 'badge-success' : 'badge-error'}`}>{row[k] ? 'Yes' : 'No'}</span>
                                                 : String(row[k] ?? '—')}
@@ -639,7 +640,7 @@ function ExpectedCollectionTable({ data: report, windowDays, onWindowChange }: {
                     <div className="stat-label">Loans Due</div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-value" style={{ color: 'var(--primary-600)' }}>ZMW {Number(s.total_expected ?? 0).toLocaleString()}</div>
+                    <div className="stat-value" style={{ color: 'var(--primary-600)' }}>{formatMoney(s.total_expected)}</div>
                     <div className="stat-label">Total Expected</div>
                 </div>
                 <div className="stat-card">
@@ -647,11 +648,11 @@ function ExpectedCollectionTable({ data: report, windowDays, onWindowChange }: {
                     <div className="stat-label">Overdue Loans</div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-value" style={{ color: 'var(--error)' }}>ZMW {Number(s.total_arrears ?? 0).toLocaleString()}</div>
+                    <div className="stat-value" style={{ color: 'var(--error)' }}>{formatMoney(s.total_arrears)}</div>
                     <div className="stat-label">Total Arrears</div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-value" style={{ color: 'var(--info)' }}>ZMW {Number(s.ptp_pipeline ?? 0).toLocaleString()}</div>
+                    <div className="stat-value" style={{ color: 'var(--info)' }}>{formatMoney(s.ptp_pipeline)}</div>
                     <div className="stat-label">PTP Pipeline</div>
                 </div>
             </div>
@@ -698,16 +699,16 @@ function ExpectedCollectionTable({ data: report, windowDays, onWindowChange }: {
                                         <td style={{ color: isOverdue ? 'var(--error)' : r.days_until_due <= 7 ? 'var(--warning)' : 'inherit', fontWeight: isOverdue ? 700 : 400 }}>
                                             {isOverdue ? `${Math.abs(r.days_until_due)}d overdue` : `in ${r.days_until_due}d`}
                                         </td>
-                                        <td>ZMW {Number(r.installment_amount).toLocaleString()}</td>
+                                        <td>{formatMoney(r.installment_amount)}</td>
                                         <td style={{ color: r.arrears > 0 ? 'var(--error)' : 'inherit' }}>
-                                            {r.arrears > 0 ? `ZMW ${Number(r.arrears).toLocaleString()}` : '—'}
+                                            {r.arrears > 0 ? formatMoney(r.arrears) : '—'}
                                         </td>
-                                        <td style={{ fontWeight: 600 }}>ZMW {Number(r.total_expected).toLocaleString()}</td>
-                                        <td>ZMW {Number(r.outstanding_balance).toLocaleString()}</td>
+                                        <td style={{ fontWeight: 600 }}>{formatMoney(r.total_expected)}</td>
+                                        <td>{formatMoney(r.outstanding_balance)}</td>
                                         <td style={{ color: r.days_overdue > 0 ? 'var(--error)' : 'inherit' }}>{r.days_overdue}</td>
                                         <td>{r.ptp_status && r.ptp_status !== 'NONE' ? <span className={`badge ${ptpBadge(r.ptp_status)}`}>{r.ptp_status}</span> : '—'}</td>
                                         <td>{r.ptp_date ?? '—'}</td>
-                                        <td>{r.ptp_amount ? `ZMW ${Number(r.ptp_amount).toLocaleString()}` : '—'}</td>
+                                        <td>{r.ptp_amount ? formatMoney(r.ptp_amount) : '—'}</td>
                                         <td><span className={`badge ${priorityColor(r.collection_priority)}`}>{r.collection_priority}</span></td>
                                     </tr>
                                 );
@@ -716,10 +717,10 @@ function ExpectedCollectionTable({ data: report, windowDays, onWindowChange }: {
                         <tfoot>
                             <tr style={{ fontWeight: 700, background: 'var(--gray-50)' }}>
                                 <td colSpan={8}>Totals ({rows.length} loans)</td>
-                                <td>ZMW {rows.reduce((a, r) => a + Number(r.installment_amount), 0).toLocaleString()}</td>
-                                <td style={{ color: 'var(--error)' }}>ZMW {rows.reduce((a, r) => a + Number(r.arrears), 0).toLocaleString()}</td>
-                                <td>ZMW {rows.reduce((a, r) => a + Number(r.total_expected), 0).toLocaleString()}</td>
-                                <td>ZMW {rows.reduce((a, r) => a + Number(r.outstanding_balance), 0).toLocaleString()}</td>
+                                <td>{formatMoney(rows.reduce((a, r) => a + Number(r.installment_amount), 0))}</td>
+                                <td style={{ color: 'var(--error)' }}>{formatMoney(rows.reduce((a, r) => a + Number(r.arrears), 0))}</td>
+                                <td>{formatMoney(rows.reduce((a, r) => a + Number(r.total_expected), 0))}</td>
+                                <td>{formatMoney(rows.reduce((a, r) => a + Number(r.outstanding_balance), 0))}</td>
                                 <td colSpan={5}></td>
                             </tr>
                         </tfoot>
@@ -792,11 +793,11 @@ function VintageAnalysisTable({ data: report, selectedProduct, onProductChange }
                     <div className="stat-label">Total Loans</div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-value" style={{ color: 'var(--primary-600)' }}>ZMW {Number(s.total_disbursed ?? 0).toLocaleString()}</div>
+                    <div className="stat-value" style={{ color: 'var(--primary-600)' }}>{formatMoney(s.total_disbursed)}</div>
                     <div className="stat-label">Total Disbursed</div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-value" style={{ color: 'var(--success)' }}>ZMW {Number(s.total_repaid ?? 0).toLocaleString()}</div>
+                    <div className="stat-value" style={{ color: 'var(--success)' }}>{formatMoney(s.total_repaid)}</div>
                     <div className="stat-label">Total Repaid</div>
                 </div>
                 <div className="stat-card">
@@ -840,15 +841,15 @@ function VintageAnalysisTable({ data: report, selectedProduct, onProductChange }
                                     <td>{r.mob}</td>
                                     <td><span className={`badge ${statusBadge(r.vintage_status)}`}>{r.vintage_status}</span></td>
                                     <td>{r.count}</td>
-                                    <td>ZMW {Number(r.disbursed).toLocaleString()}</td>
-                                    <td>ZMW {Number(r.avg_loan_size).toLocaleString()}</td>
+                                    <td>{formatMoney(r.disbursed)}</td>
+                                    <td>{formatMoney(r.avg_loan_size)}</td>
                                     <td>{r.avg_term_months}m</td>
                                     <td>{r.avg_interest_rate}%</td>
                                     <td>{r.active}</td>
                                     <td>{r.closed}</td>
                                     <td style={{ color: r.written_off > 0 ? 'var(--error)' : 'inherit' }}>{r.written_off}</td>
-                                    <td>ZMW {Number(r.repaid).toLocaleString()}</td>
-                                    <td>ZMW {Number(r.outstanding).toLocaleString()}</td>
+                                    <td>{formatMoney(r.repaid)}</td>
+                                    <td>{formatMoney(r.outstanding)}</td>
                                     <td style={{ fontWeight: 600, color: parColor(r.par30_rate) }}>{r.par30_rate}%</td>
                                     <td style={{ fontWeight: 600, color: parColor(r.par90_rate) }}>{r.par90_rate}%</td>
                                     <td style={{ fontWeight: 600, color: collColor(r.collection_rate) }}>{r.collection_rate}%</td>
@@ -861,13 +862,13 @@ function VintageAnalysisTable({ data: report, selectedProduct, onProductChange }
                             <tr style={{ fontWeight: 700, background: 'var(--gray-50)' }}>
                                 <td colSpan={3}>Totals ({rows.length} vintages)</td>
                                 <td>{rows.reduce((a, r) => a + r.count, 0)}</td>
-                                <td>ZMW {rows.reduce((a, r) => a + r.disbursed, 0).toLocaleString()}</td>
+                                <td>{formatMoney(rows.reduce((a, r) => a + r.disbursed, 0))}</td>
                                 <td colSpan={3}></td>
                                 <td>{rows.reduce((a, r) => a + r.active, 0)}</td>
                                 <td>{rows.reduce((a, r) => a + r.closed, 0)}</td>
                                 <td>{rows.reduce((a, r) => a + r.written_off, 0)}</td>
-                                <td>ZMW {rows.reduce((a, r) => a + r.repaid, 0).toLocaleString()}</td>
-                                <td>ZMW {rows.reduce((a, r) => a + r.outstanding, 0).toLocaleString()}</td>
+                                <td>{formatMoney(rows.reduce((a, r) => a + r.repaid, 0))}</td>
+                                <td>{formatMoney(rows.reduce((a, r) => a + r.outstanding, 0))}</td>
                                 <td colSpan={5}></td>
                             </tr>
                         </tfoot>

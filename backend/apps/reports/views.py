@@ -615,8 +615,8 @@ class DashboardStatsView(APIView):
             
             monthly_performance.append({
                 'month': month_date.strftime('%b'),
-                'disbursed': float(disbursed) / 1000,
-                'collected': float(collected) / 1000,
+                'disbursed': float(disbursed),
+                'collected': float(collected),
             })
 
         return Response({

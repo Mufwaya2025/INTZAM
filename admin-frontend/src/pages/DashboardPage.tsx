@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { reportsAPI } from '../services/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { formatMoney } from '../utils/format';
 
 const COLORS = ['#7c3aed', '#10b981', '#f59e0b', '#ef4444', '#3b82f6'];
 
@@ -41,7 +42,7 @@ export default function DashboardPage() {
                 <StatCard
                     icon="💰"
                     iconClass="green"
-                    value={`ZMW ${(s.total_portfolio / 1000).toFixed(0)}K`}
+                    value={formatMoney(s.total_portfolio)}
                     label="Active Portfolio"
                 />
                 <StatCard
@@ -62,14 +63,14 @@ export default function DashboardPage() {
                 <StatCard
                     icon="📥"
                     iconClass="green"
-                    value={`ZMW ${(s.monthly_disbursed / 1000).toFixed(0)}K`}
+                    value={formatMoney(s.monthly_disbursed)}
                     label="Monthly Disbursed"
                     change="This month"
                 />
                 <StatCard
                     icon="📤"
                     iconClass="purple"
-                    value={`ZMW ${(s.monthly_collected / 1000).toFixed(0)}K`}
+                    value={formatMoney(s.monthly_collected)}
                     label="Monthly Collected"
                     change="This month"
                 />
@@ -87,8 +88,8 @@ export default function DashboardPage() {
                             <BarChart data={monthlyData}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                                 <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                                <YAxis tick={{ fontSize: 12 }} tickFormatter={v => `ZMW ${v}K`} />
-                                <Tooltip formatter={(v: any) => [`ZMW ${v}K`, '']} />
+                                <YAxis tick={{ fontSize: 12 }} tickFormatter={v => formatMoney(v)} width={110} />
+                                <Tooltip formatter={(v: any) => [formatMoney(v), '']} />
                                 <Bar dataKey="disbursed" fill="#7c3aed" radius={[4, 4, 0, 0]} name="Disbursed" />
                                 <Bar dataKey="collected" fill="#10b981" radius={[4, 4, 0, 0]} name="Collected" />
                             </BarChart>
@@ -128,7 +129,7 @@ export default function DashboardPage() {
                 <div className="alert alert-warning" style={{ marginBottom: 24 }}>
                     <span>⚠️</span>
                     <div>
-                        <strong>PAR Alert:</strong> Portfolio at Risk is {s.par_ratio}% (ZMW {s.par_amount?.toLocaleString()}).
+                        <strong>PAR Alert:</strong> Portfolio at Risk is {s.par_ratio}% ({formatMoney(s.par_amount)}).
                         This exceeds the 5% threshold. Review collections immediately.
                     </div>
                 </div>

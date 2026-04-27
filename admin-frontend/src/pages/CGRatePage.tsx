@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { cgrateAPI } from '../services/api';
+import { formatMoneyAbs } from '../utils/format';
 
 type CGRateTxn = {
     id: number;
@@ -32,11 +33,6 @@ const statusClass: Record<string, string> = {
     FAILED: 'badge-error',
     ERROR: 'badge-error',
 };
-
-function money(value: number | string | null | undefined) {
-    const num = Number(value || 0);
-    return `ZMW ${Math.abs(num).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
 
 function listFromResponse<T>(data: T[] | PaginatedResponse<T>): T[] {
     if (Array.isArray(data)) return data;
@@ -75,9 +71,9 @@ export default function CGRatePage() {
     useEffect(() => { loadData(); }, []);
 
     const summary = useMemo(() => [
-        { label: 'Current Balance', value: balance == null ? 'Unavailable' : money(balance), sub: 'CGRate account' },
-        { label: 'Total Paid Today', value: money(stats.total_paid_today), sub: `${stats.paid_count} disbursement(s)` },
-        { label: 'Total Received Today', value: money(stats.total_received_today), sub: `${stats.received_count} collection(s)` },
+        { label: 'Current Balance', value: balance == null ? 'Unavailable' : formatMoneyAbs(balance), sub: 'CGRate account' },
+        { label: 'Total Paid Today', value: formatMoneyAbs(stats.total_paid_today), sub: `${stats.paid_count} disbursement(s)` },
+        { label: 'Total Received Today', value: formatMoneyAbs(stats.total_received_today), sub: `${stats.received_count} collection(s)` },
     ], [balance, stats]);
 
     return (
@@ -141,7 +137,7 @@ export default function CGRatePage() {
                                         <td>{txn.loan_number || '-'}</td>
                                         <td>{txn.transaction_type}</td>
                                         <td style={{ color: Number(txn.amount) < 0 ? 'var(--error)' : 'var(--success)', fontWeight: 700 }}>
-                                            {Number(txn.amount) < 0 ? '-' : '+'}{money(txn.amount)}
+                                            {Number(txn.amount) < 0 ? '-' : '+'}{formatMoneyAbs(txn.amount)}
                                         </td>
                                         <td>{txn.service}</td>
                                         <td style={{ fontFamily: 'monospace', fontSize: 12 }}>{txn.reference}</td>

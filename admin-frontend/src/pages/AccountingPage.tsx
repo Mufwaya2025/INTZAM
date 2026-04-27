@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { accountingAPI, loansAPI } from '../services/api';
+import { formatMoney } from '../utils/format';
 
 interface AccountingPageProps {
     initialTab?: 'disbursements' | 'trial-balance' | 'accounts' | 'journal';
@@ -187,8 +188,8 @@ export default function AccountingPage({ initialTab = 'trial-balance' }: Account
                                             <td>{loan.client_name || loan.client}</td>
                                             <td>{loan.product_name || loan.product}</td>
                                             <td>{loan.approved_by || '—'}</td>
-                                            <td><strong>ZMW {Number(loan.amount).toLocaleString()}</strong></td>
-                                            <td>ZMW {Number(loan.total_repayable).toLocaleString()}</td>
+                                            <td><strong>{formatMoney(loan.amount)}</strong></td>
+                                            <td>{formatMoney(loan.total_repayable)}</td>
                                             <td>{loan.created_at?.split('T')[0] || '—'}</td>
                                             <td>
                                                 <button
@@ -228,8 +229,8 @@ export default function AccountingPage({ initialTab = 'trial-balance' }: Account
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, fontSize: 13 }}>
                                             <div><span style={{ color: 'var(--gray-400)' }}>Client:</span> <strong>{selectedLoan.client_name}</strong></div>
                                             <div><span style={{ color: 'var(--gray-400)' }}>Product:</span> <strong>{selectedLoan.product_name}</strong></div>
-                                            <div><span style={{ color: 'var(--gray-400)' }}>Amount:</span> <strong>ZMW {Number(selectedLoan.amount).toLocaleString()}</strong></div>
-                                            <div><span style={{ color: 'var(--gray-400)' }}>Total Repayable:</span> <strong>ZMW {Number(selectedLoan.total_repayable).toLocaleString()}</strong></div>
+                                            <div><span style={{ color: 'var(--gray-400)' }}>Amount:</span> <strong>{formatMoney(selectedLoan.amount)}</strong></div>
+                                            <div><span style={{ color: 'var(--gray-400)' }}>Total Repayable:</span> <strong>{formatMoney(selectedLoan.total_repayable)}</strong></div>
                                             <div><span style={{ color: 'var(--gray-400)' }}>Term:</span> <strong>{selectedLoan.term_months} months</strong></div>
                                             <div><span style={{ color: 'var(--gray-400)' }}>Approved By:</span> <strong>{selectedLoan.approved_by || '—'}</strong></div>
                                         </div>
@@ -272,7 +273,7 @@ export default function AccountingPage({ initialTab = 'trial-balance' }: Account
                                                     </div>
                                                     <div>
                                                         <div style={{ fontSize: 12, color: 'var(--gray-500)', fontWeight: 600 }}>Monthly Income</div>
-                                                        <div style={{ marginTop: 4 }}>ZMW {Number(selectedLoan.client_details.monthly_income || 0).toLocaleString()}</div>
+                                                        <div style={{ marginTop: 4 }}>{formatMoney(selectedLoan.client_details.monthly_income)}</div>
                                                     </div>
                                                     <div>
                                                         <div style={{ fontSize: 12, color: 'var(--gray-500)', fontWeight: 600 }}>Employer Name</div>
@@ -400,10 +401,10 @@ export default function AccountingPage({ initialTab = 'trial-balance' }: Account
                                         <td>{acc.name}</td>
                                         <td><span className={`badge ${acc.type === 'ASSET' ? 'badge-success' : acc.type === 'LIABILITY' ? 'badge-error' : acc.type === 'INCOME' ? 'badge-purple' : 'badge-warning'}`}>{acc.type}</span></td>
                                         <td style={{ textAlign: 'right', fontFamily: 'monospace' }}>
-                                            {acc.debit > 0 ? `ZMW ${acc.debit.toLocaleString()}` : '—'}
+                                            {acc.debit > 0 ? formatMoney(acc.debit) : '—'}
                                         </td>
                                         <td style={{ textAlign: 'right', fontFamily: 'monospace' }}>
-                                            {acc.credit > 0 ? `ZMW ${acc.credit.toLocaleString()}` : '—'}
+                                            {acc.credit > 0 ? formatMoney(acc.credit) : '—'}
                                         </td>
                                     </tr>
                                 ))}
@@ -412,10 +413,10 @@ export default function AccountingPage({ initialTab = 'trial-balance' }: Account
                                 <tr style={{ background: 'var(--primary-50)', fontWeight: 700 }}>
                                     <td colSpan={3} style={{ padding: '14px 16px' }}>TOTALS</td>
                                     <td style={{ textAlign: 'right', padding: '14px 16px', fontFamily: 'monospace', color: 'var(--primary-700)' }}>
-                                        ZMW {(trialBalance.total_debit || 0).toLocaleString()}
+                                        {formatMoney(trialBalance.total_debit)}
                                     </td>
                                     <td style={{ textAlign: 'right', padding: '14px 16px', fontFamily: 'monospace', color: 'var(--primary-700)' }}>
-                                        ZMW {(trialBalance.total_credit || 0).toLocaleString()}
+                                        {formatMoney(trialBalance.total_credit)}
                                     </td>
                                 </tr>
                             </tfoot>
@@ -449,7 +450,7 @@ export default function AccountingPage({ initialTab = 'trial-balance' }: Account
                                         <td><span className={`badge ${acc.account_type === 'ASSET' ? 'badge-success' : acc.account_type === 'LIABILITY' ? 'badge-error' : acc.account_type === 'INCOME' ? 'badge-purple' : 'badge-warning'}`}>{acc.account_type}</span></td>
                                         <td><span className="badge badge-gray">{acc.category}</span></td>
                                         <td style={{ textAlign: 'right', fontFamily: 'monospace', fontWeight: 600 }}>
-                                            ZMW {Number(acc.balance).toLocaleString()}
+                                            {formatMoney(acc.balance)}
                                         </td>
                                         <td><span className={`badge ${acc.is_active ? 'badge-success' : 'badge-error'}`}>{acc.is_active ? 'Active' : 'Inactive'}</span></td>
                                     </tr>
@@ -490,8 +491,8 @@ export default function AccountingPage({ initialTab = 'trial-balance' }: Account
                                             <td style={{ fontFamily: 'monospace' }}>{entry.reference_id || `JE-${entry.id}`}</td>
                                             <td>{entry.description}</td>
                                             <td>{entry.date}</td>
-                                            <td style={{ textAlign: 'right', fontFamily: 'monospace' }}>ZMW {Number(entry.total_debit || 0).toLocaleString()}</td>
-                                            <td style={{ textAlign: 'right', fontFamily: 'monospace' }}>ZMW {Number(entry.total_credit || 0).toLocaleString()}</td>
+                                            <td style={{ textAlign: 'right', fontFamily: 'monospace' }}>{formatMoney(entry.total_debit)}</td>
+                                            <td style={{ textAlign: 'right', fontFamily: 'monospace' }}>{formatMoney(entry.total_credit)}</td>
                                             <td><span className={`badge ${entry.is_posted ? 'badge-success' : 'badge-warning'}`}>{entry.is_posted ? 'Posted' : 'Draft'}</span></td>
                                         </tr>
                                     ))}
