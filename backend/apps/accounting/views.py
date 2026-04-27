@@ -17,7 +17,7 @@ from apps.authentication.permission_utils import user_has_permission
 from .models import LedgerAccount, JournalEntry, JournalLine
 from .momo_reconcile import reconcile_momo_payment
 from .odoo_client import get_odoo_client, OdooConnectionError
-from .services import ensure_opening_bank_balance, post_journal_entry
+from .services import ensure_default_accounts, post_journal_entry
 
 _logger = logging.getLogger(__name__)
 
@@ -129,7 +129,7 @@ class LedgerAccountListCreateView(generics.ListCreateAPIView):
     permission_classes = [CanWriteAccounting]
 
     def get_queryset(self):
-        ensure_opening_bank_balance()
+        ensure_default_accounts()
         return LedgerAccount.objects.filter(is_active=True)
 
 
@@ -148,7 +148,7 @@ class JournalEntryListCreateView(generics.ListCreateAPIView):
         return JournalEntrySerializer
 
     def get_queryset(self):
-        ensure_opening_bank_balance()
+        ensure_default_accounts()
         return JournalEntry.objects.prefetch_related('lines__account').order_by('-date')
 
 
@@ -430,7 +430,7 @@ class TrialBalanceView(APIView):
     permission_classes = [CanUseAccounting]
 
     def get(self, request):
-        ensure_opening_bank_balance()
+        ensure_default_accounts()
         accounts = LedgerAccount.objects.filter(is_active=True)
         data = []
         total_debit = 0

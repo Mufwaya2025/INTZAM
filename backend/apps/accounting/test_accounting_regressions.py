@@ -1,6 +1,6 @@
 from rest_framework.test import APITestCase
 
-from apps.accounting.models import LedgerAccount
+from apps.accounting.models import JournalEntry, LedgerAccount
 from apps.authentication.models import User
 from apps.core.models import Client, InterestType, LoanProduct
 from apps.loans.models import Loan, LoanStatus
@@ -112,6 +112,16 @@ class AccountingRegressionTests(APITestCase):
         self.assertEqual(self.asset.balance, 100)
         self.assertEqual(self.equity.balance, -100)
         self.assertEqual(response.data['posted_by'], self.accountant.username)
+
+    def test_reading_trial_balance_does_not_seed_opening_balance(self):
+        self._auth()
+
+        response = self.client.get('/api/v1/accounting/trial-balance/')
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertFalse(JournalEntry.objects.filter(reference_id='OPENING-BANK-BALANCE').exists())
+        self.assertEqual(response.data['total_debit'], 0)
+        self.assertEqual(response.data['total_credit'], 0)
 
     def test_monthly_report_par_ratio_uses_net_outstanding(self):
         client_user = User.objects.create_user(
